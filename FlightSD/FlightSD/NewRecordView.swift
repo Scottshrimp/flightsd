@@ -8,8 +8,8 @@ struct NewRecordView: View {
 
     @State private var activeField: Int? = 0
 
-    @State private var dimension: Dimension = .twoDimension
-    @State private var mediaType: MediaType = .img
+    @State private var dimension: Dimension? = nil
+    @State private var mediaType: MediaType? = nil
     @State private var typeAge: Double? = nil
     @State private var typePosition: Double? = nil
     @State private var typeExistence: Double? = nil
@@ -23,6 +23,7 @@ struct NewRecordView: View {
     @State private var preciseDensityInput: String = ""
 
     private var allFilled: Bool {
+        dimension != nil && mediaType != nil &&
         typeAge != nil && typePosition != nil && typeExistence != nil &&
         time != nil && sound != nil && atm != nil &&
         postnut != nil && horny != nil && !mass.isEmpty
@@ -32,19 +33,23 @@ struct NewRecordView: View {
         dimension == .twoDimension ? [.img, .vid, .txt, .aud] : [.img, .vid]
     }
 
+    // dimension 和 mediaType 是否已选
+    private var dimensionFilled: Bool { dimension != nil }
+    private var mediaTypeFilled: Bool { mediaType != nil }
+
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 0) {
 
                     FieldRow(index: 0, title: "次元", activeField: $activeField,
-                             filledValue: activeField != 0 ? dimension.rawValue : nil) {
+                             filledValue: activeField != 0 ? dimension?.rawValue : nil) {
                         HStack(spacing: 12) {
                             ForEach([Dimension.twoDimension, Dimension.threeDimension], id: \.self) { d in
                                 Button(d == .twoDimension ? "二次元" : "三次元") {
                                     dimension = d
                                     if d == .threeDimension && (mediaType == .txt || mediaType == .aud) {
-                                        mediaType = .img
+                                        mediaType = nil
                                     }
                                     advance(from: 0)
                                 }
@@ -55,7 +60,7 @@ struct NewRecordView: View {
                     }
 
                     FieldRow(index: 1, title: "媒体类型", activeField: $activeField,
-                             filledValue: activeField != 1 ? mediaTypeLabel(mediaType) : nil) {
+                             filledValue: activeField != 1 ? mediaType.map { mediaTypeLabel($0) } : nil) {
                         HStack(spacing: 12) {
                             ForEach(availableMediaTypes, id: \.self) { m in
                                 Button(mediaTypeLabel(m)) {
@@ -90,7 +95,7 @@ struct NewRecordView: View {
 
                     sliderRow(index: 6, title: "声音",
                               value: Binding(get: { ((sound ?? 0.0) + 1) / 2 }, set: { sound = $0 * 2 - 1 }),
-                              filled: sound,
+                              filled: sound.map { ($0 + 1) / 2 },
                               labels: ["不喜欢", "纯图", "喜欢", "纯音"])
 
                     sliderRow(index: 7, title: "氛围",
@@ -154,11 +159,11 @@ struct NewRecordView: View {
                         .buttonStyle(.bordered)
                         .clipShape(Circle())
                         .contextMenu {
-                            Button("5 分钟后提醒")  { scheduleReminder(minutes: 5) }
-                            Button("15 分钟后提醒") { scheduleReminder(minutes: 15) }
-                            Button("30 分钟后提醒") { scheduleReminder(minutes: 30) }
-                            Button("1 小时后提醒")  { scheduleReminder(minutes: 60) }
-                            Button("2 小时后提醒")  { scheduleReminder(minutes: 120) }
+                            Button("5 分钟后提醒")  { saveRecord(); scheduleReminder(minutes: 5);   dismiss() }
+                            Button("15 分钟后提醒") { saveRecord(); scheduleReminder(minutes: 15);  dismiss() }
+                            Button("30 分钟后提醒") { saveRecord(); scheduleReminder(minutes: 30);  dismiss() }
+                            Button("1 小时后提醒")  { saveRecord(); scheduleReminder(minutes: 60);  dismiss() }
+                            Button("2 小时后提醒")  { saveRecord(); scheduleReminder(minutes: 120); dismiss() }
                         }
                     }
                 }
@@ -186,7 +191,7 @@ struct NewRecordView: View {
 
     func advance(from index: Int) {
         let filled: [Bool] = [
-            true, true,
+            dimension != nil, mediaType != nil,
             typeAge != nil, typePosition != nil, typeExistence != nil,
             time != nil, sound != nil, atm != nil, postnut != nil, horny != nil,
             !mass.isEmpty
@@ -214,8 +219,8 @@ struct NewRecordView: View {
 
     func saveRecord() {
         let record = Record(
-            dimension: dimension,
-            mediaType: mediaType,
+            dimension: dimension ?? .twoDimension,
+            mediaType: mediaType ?? .img,
             typeAge: typeAge ?? 0.5,
             typePosition: typePosition ?? 0.5,
             typeExistence: typeExistence ?? 0.5,
