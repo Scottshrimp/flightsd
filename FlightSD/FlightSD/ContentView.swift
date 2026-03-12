@@ -52,6 +52,7 @@ struct ContentView: View {
         }
         .onAppear {
             if true {
+                //lastOpenedDate != todayString {
                 lastOpenedDate = todayString
                 selectedTab = 0
                 appState.showNewRecord = true
