@@ -1,10 +1,3 @@
-//
-//  FlightSDApp.swift
-//  FlightSD
-//
-//  Created by Scott Nishiki on 2026-03-11.
-//
-
 import SwiftUI
 import SwiftData
 
@@ -12,7 +5,7 @@ import SwiftData
 struct FlightSDApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
-            Item.self,
+            Record.self,
         ])
         let modelConfiguration = ModelConfiguration(
             schema: schema,

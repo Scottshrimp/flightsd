@@ -1,66 +1,63 @@
-//
-//  ContentView.swift
-//  FlightSD
-//
-//  Created by Scott Nishiki on 2026-03-11.
-//
-
 import SwiftUI
 import SwiftData
 
 struct ContentView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
+
+    @AppStorage("lastOpenedDate") private var lastOpenedDate: String = ""
+    @State private var selectedTab: Int = 0
+
+    // 创建 AppState 实例，注入给所有子页面
+    @State private var appState = AppState()
+
+    private var todayString: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: Date.now)
+    }
 
     var body: some View {
-        NavigationSplitView {
-            List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
-                    } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
-                    }
+
+        TabView(selection: $selectedTab) {
+
+            RecordsView()
+                .tabItem {
+                    Label("记录", systemImage: "pencil")
                 }
-                .onDelete(perform: deleteItems)
+                .tag(0)
+
+            TrendView()
+                .tabItem {
+                    Label("趋势", systemImage: "arrow.up.arrow.down")
+                }
+                .tag(1)
+
+            StatsView()
+                .tabItem {
+                    Label("统计", systemImage: "chart.dots.scatter")
+                }
+                .tag(2)
+
+            ProfileView()
+                .tabItem {
+                    Label("Profile", systemImage: "person")
+                }
+                .tag(3)
+
+        }
+        // 把 appState 注入到整个 app 的环境里
+        // 之后任何子页面都可以直接取用，不需要一层层传
+        .environment(appState)
+        .sheet(isPresented: $appState.showNewRecord) {
+            NewRecordView()
+        }
+        .onAppear {
+            if true {
+                lastOpenedDate = todayString
+                selectedTab = 0
+                appState.showNewRecord = true
+            } else {
+                selectedTab = 1
             }
-#if os(macOS)
-            .navigationSplitViewColumnWidth(min: 180, ideal: 200)
-#endif
-            .toolbar {
-#if os(iOS)
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
-                }
-#endif
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
-                    }
-                }
-            }
-        } detail: {
-            Text("Select an item")
         }
     }
-
-    private func addItem() {
-        withAnimation {
-            let newItem = Item(timestamp: Date())
-            modelContext.insert(newItem)
-        }
-    }
-
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(items[index])
-            }
-        }
-    }
-}
-
-#Preview {
-    ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
 }
