@@ -400,7 +400,20 @@ private struct MetricDotStrip: View {
 }
 
 private struct AddRecordBar: View {
+    @Environment(\.colorScheme) private var colorScheme
+
     let action: () -> Void
+
+    private var gradientColors: [Color] {
+        let darkerBlue = Color(red: 0, green: 114.0 / 255.0, blue: 0.98)
+        let lighterBlue = Color(red: 24.0 / 255.0, green: 134.0 / 255.0, blue: 1)
+
+        if colorScheme == .dark {
+            return [lighterBlue, darkerBlue]
+        }
+
+        return [darkerBlue, lighterBlue]
+    }
 
     var body: some View {
         Button {
@@ -429,11 +442,16 @@ private struct AddRecordBar: View {
                     .fill(.ultraThinMaterial)
 
                 Rectangle()
-                    .fill(Color(red: 0, green: 122.0 / 255.0, blue: 1))
-                                        .saturation(1.4)
-                                        .brightness(-0.05)
-                                        .opacity(0.60)
-
+                    .fill(
+                        LinearGradient(
+                            colors: gradientColors,
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .saturation(1.3)
+                    .brightness(-0.05)
+                    .opacity(0.60)
             }
         }
         .overlay(alignment: .top) {
