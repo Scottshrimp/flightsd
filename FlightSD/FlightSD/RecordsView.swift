@@ -429,7 +429,7 @@ private struct AddRecordBar: View {
                     .fill(.ultraThinMaterial)
 
                 Rectangle()
-                    .fill(Color.accentColor.opacity(0.84))
+                    .fill(Color.accentColor.opacity(0.68))
             }
         }
         .overlay(alignment: .top) {
