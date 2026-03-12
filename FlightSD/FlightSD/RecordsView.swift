@@ -409,31 +409,35 @@ private struct AddRecordBar: View {
             HStack {
                 Text("Add Record")
                     .font(.headline)
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(.white)
 
                 Spacer()
 
                 Image(systemName: "arrow.up.left")
                     .font(.headline.weight(.semibold))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.white)
             }
-            .padding(.horizontal, 18)
+            .padding(.horizontal, 20)
             .padding(.vertical, 16)
+            .frame(maxWidth: .infinity)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .background {
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(.ultraThinMaterial)
+            ZStack {
+                Rectangle()
+                    .fill(.ultraThinMaterial)
+
+                Rectangle()
+                    .fill(Color.accentColor.opacity(0.84))
+            }
         }
-        .overlay {
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
+        .overlay(alignment: .top) {
+            Rectangle()
+                .fill(Color.white.opacity(0.18))
+                .frame(height: 1)
         }
-        .padding(.horizontal, 16)
-        .padding(.top, 8)
-        .padding(.bottom, 12)
-        .shadow(color: .black.opacity(0.04), radius: 12, y: 6)
+        .ignoresSafeArea(edges: .horizontal)
     }
 }
 
