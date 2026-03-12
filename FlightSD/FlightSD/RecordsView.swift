@@ -573,7 +573,7 @@ private struct RecordDraft {
         guard let massValue else { return "--" }
         let density = preciseDensityValue ?? 1.035
         let estVol = massValue / density
-        return "\(RecordPresentation.numberText(estVol, maxFractionDigits: 1)) mL"
+        return "\(RecordPresentation.fixedNumberText(estVol, fractionDigits: 2)) mL"
     }
 }
 
@@ -648,7 +648,7 @@ private enum RecordPresentation {
 
     static func recordSubtitle(for record: Record) -> String {
         let mass = numberText(record.mass, maxFractionDigits: 1)
-        let estVol = numberText(record.estVol, maxFractionDigits: 1)
+        let estVol = fixedNumberText(record.estVol, fractionDigits: 2)
         return "\(mass) g · \(estVol) mL"
     }
 
@@ -671,6 +671,13 @@ private enum RecordPresentation {
                 .precision(.fractionLength(0 ... maxFractionDigits))
         )
     }
+
+    static func fixedNumberText(_ value: Double, fractionDigits: Int) -> String {
+        value.formatted(
+            .number
+                .precision(.fractionLength(fractionDigits))
+        )
+    }
 }
 
 private func zoneIndex(for value: Double, zoneCount: Int) -> Int {
@@ -680,7 +687,7 @@ private func zoneIndex(for value: Double, zoneCount: Int) -> Int {
 }
 
 private func zoneColor(for zone: Int, zoneCount: Int) -> Color {
-    let palette: [Color] = [.blue, .teal, .green, .orange, .pink]
+    let palette: [Color] = [.teal, .blue, .green, .orange, .pink]
     guard zoneCount > 1 else { return palette[2] }
 
     let scaledIndex = Int(

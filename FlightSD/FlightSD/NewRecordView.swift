@@ -5,8 +5,10 @@ struct NewRecordView: View {
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @AppStorage("hasSeenNewRecordIntroCard") private var hasSeenNewRecordIntroCard: Bool = false
 
     @State private var activeField: Int? = 0
+    @State private var showIntroCard: Bool = false
 
     @State private var dimension: Dimension? = nil
     @State private var mediaType: MediaType? = nil
@@ -51,10 +53,6 @@ struct NewRecordView: View {
         filledStatus.allSatisfy { $0 }
     }
 
-    private var completedCount: Int {
-        filledStatus.filter { $0 }.count
-    }
-
     private var availableMediaTypes: [MediaType] {
         dimension == .twoDimension ? [.img, .vid, .txt, .aud] : [.img, .vid]
     }
@@ -63,14 +61,16 @@ struct NewRecordView: View {
         guard let massValue = Double(mass) else { return "--" }
         let density = usePreciseDensity ? (Double(preciseDensityInput) ?? 1.035) : 1.035
         let estimatedVolume = massValue / density
-        return "\(newRecordNumberText(estimatedVolume, maxFractionDigits: 1)) mL"
+        return "\(newRecordFixedNumberText(estimatedVolume, fractionDigits: 2)) mL"
     }
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 24) {
-                    headerCard
+                    if showIntroCard {
+                        headerCard
+                    }
 
                     Text("填写细节")
                         .font(.system(.title2, design: .rounded).weight(.bold))
@@ -182,28 +182,39 @@ struct NewRecordView: View {
                             filledValue: activeField != 10 ? massSummary : nil
                         ) {
                             VStack(alignment: .leading, spacing: 16) {
-                                VStack(alignment: .leading, spacing: 8) {
-                                    Text("质量")
-                                        .font(.subheadline.weight(.semibold))
+                                GeometryReader { geometry in
+                                    let compactFieldWidth = geometry.size.width / 5
 
-                                    TextField("克数", text: $mass)
-                                        .keyboardType(.decimalPad)
-                                        .textFieldStyle(.roundedBorder)
+                                    HStack(alignment: .top, spacing: 12) {
+                                        VStack(alignment: .leading, spacing: 8) {
+                                            Text("质量")
+                                                .font(.subheadline.weight(.semibold))
+
+                                            TextField("克数", text: $mass)
+                                                .keyboardType(.decimalPad)
+                                                .textFieldStyle(.roundedBorder)
+                                                .frame(width: compactFieldWidth)
+                                        }
+
+                                        if usePreciseDensity {
+                                            VStack(alignment: .leading, spacing: 8) {
+                                                Text("密度")
+                                                    .font(.subheadline.weight(.semibold))
+
+                                                TextField("密度", text: $preciseDensityInput)
+                                                    .keyboardType(.decimalPad)
+                                                    .textFieldStyle(.roundedBorder)
+                                                    .frame(width: compactFieldWidth)
+                                            }
+                                        }
+
+                                        Spacer(minLength: 0)
+                                    }
                                 }
+                                .frame(height: 62)
 
                                 Toggle("精确密度", isOn: $usePreciseDensity)
                                     .font(.subheadline)
-
-                                if usePreciseDensity {
-                                    VStack(alignment: .leading, spacing: 8) {
-                                        Text("密度")
-                                            .font(.subheadline.weight(.semibold))
-
-                                        TextField("密度", text: $preciseDensityInput)
-                                            .keyboardType(.decimalPad)
-                                            .textFieldStyle(.roundedBorder)
-                                    }
-                                }
 
                                 HStack {
                                     VStack(alignment: .leading, spacing: 4) {
@@ -238,6 +249,9 @@ struct NewRecordView: View {
                     }
                 }
             }
+            .onAppear {
+                markIntroCardSeenIfNeeded()
+            }
         }
     }
 
@@ -249,30 +263,6 @@ struct NewRecordView: View {
             Text(allFilled ? "所有字段都已填完，可以直接保存。" : "按顺序快速填写，也可以直接点开任意卡片补充。")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
-
-            HStack(spacing: 10) {
-                StatusPill(
-                    title: "进度",
-                    value: "\(completedCount)/11",
-                    emphasized: allFilled
-                )
-
-                if let dimension {
-                    StatusPill(
-                        title: "次元",
-                        value: dimensionLabel(dimension),
-                        emphasized: true
-                    )
-                }
-
-                if let mediaType {
-                    StatusPill(
-                        title: "媒体",
-                        value: mediaTypeLabel(mediaType),
-                        emphasized: true
-                    )
-                }
-            }
 
             if !mass.isEmpty {
                 HStack {
@@ -475,6 +465,12 @@ struct NewRecordView: View {
     private func scheduleReminder(minutes: Int) {
         print("将在 \(minutes) 分钟后提醒")
     }
+
+    private func markIntroCardSeenIfNeeded() {
+        guard !hasSeenNewRecordIntroCard else { return }
+        showIntroCard = true
+        hasSeenNewRecordIntroCard = true
+    }
 }
 
 struct CustomSliderField: View {
@@ -656,30 +652,6 @@ struct SelectionButtonStyle: ButtonStyle {
     }
 }
 
-private struct StatusPill: View {
-    let title: String
-    let value: String
-    let emphasized: Bool
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(title)
-                .font(.caption2)
-                .foregroundStyle(emphasized ? .white.opacity(0.82) : .secondary)
-
-            Text(value)
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(emphasized ? .white : .primary)
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
-        .background {
-            Capsule()
-                .fill(emphasized ? Color.accentColor : Color.primary.opacity(0.05))
-        }
-    }
-}
-
 private func newRecordZoneIndex(for value: Double, zoneCount: Int) -> Int {
     guard zoneCount > 1 else { return 0 }
     let clampedValue = min(max(value, 0), 1)
@@ -687,7 +659,7 @@ private func newRecordZoneIndex(for value: Double, zoneCount: Int) -> Int {
 }
 
 private func newRecordZoneColor(for zone: Int, zoneCount: Int) -> Color {
-    let palette: [Color] = [.blue, .teal, .green, .orange, .pink]
+    let palette: [Color] = [.teal, .blue, .green, .orange, .pink]
     guard zoneCount > 1 else { return palette[2] }
 
     let scaledIndex = Int(
@@ -703,5 +675,12 @@ private func newRecordNumberText(_ value: Double, maxFractionDigits: Int) -> Str
     value.formatted(
         .number
             .precision(.fractionLength(0 ... maxFractionDigits))
+    )
+}
+
+private func newRecordFixedNumberText(_ value: Double, fractionDigits: Int) -> String {
+    value.formatted(
+        .number
+            .precision(.fractionLength(fractionDigits))
     )
 }
