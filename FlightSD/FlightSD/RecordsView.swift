@@ -277,7 +277,7 @@ private final class RecordsScrollBridge {
                 scrollView.contentSize.height - scrollView.bounds.height + scrollView.adjustedContentInset.bottom,
                 minOffsetY
             )
-            let adjustedOffsetY = min(max(scrollView.contentOffset.y + delta, minOffsetY), maxOffsetY)
+            let adjustedOffsetY = min(max(scrollView.contentOffset.y - delta, minOffsetY), maxOffsetY)
 
             scrollView.setContentOffset(CGPoint(x: scrollView.contentOffset.x, y: adjustedOffsetY), animated: false)
         }
