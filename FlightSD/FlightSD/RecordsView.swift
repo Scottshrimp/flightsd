@@ -194,6 +194,7 @@ private struct RecordEntryCard: View {
 
 private struct RecordsVerticalRevealModifier: AnimatableModifier {
     var progress: CGFloat
+    private let travel: CGFloat = 28
 
     var animatableData: CGFloat {
         get { progress }
@@ -202,7 +203,11 @@ private struct RecordsVerticalRevealModifier: AnimatableModifier {
 
     func body(content: Content) -> some View {
         content
-            .scaleEffect(x: 1, y: max(progress, 0.001), anchor: .top)
+            .offset(y: (1 - progress) * -travel)
+            .mask(alignment: .top) {
+                Rectangle()
+                    .scaleEffect(x: 1, y: max(progress, 0.001), anchor: .top)
+            }
             .opacity(progress)
     }
 }
