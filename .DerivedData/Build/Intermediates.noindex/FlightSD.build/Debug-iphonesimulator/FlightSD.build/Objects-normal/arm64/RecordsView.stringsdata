@@ -7,7 +7,7 @@
         "key": "更久之前",
         "location": {
           "startingColumn": 18,
-          "startingLine": 86
+          "startingLine": 98
         }
       },
       {
@@ -15,7 +15,7 @@
         "key": "是否要删除记录",
         "location": {
           "startingColumn": 16,
-          "startingLine": 269
+          "startingLine": 281
         }
       },
       {
@@ -23,7 +23,7 @@
         "key": "Cancel",
         "location": {
           "startingColumn": 20,
-          "startingLine": 270
+          "startingLine": 282
         }
       },
       {
@@ -31,7 +31,7 @@
         "key": "Confirm",
         "location": {
           "startingColumn": 20,
-          "startingLine": 271
+          "startingLine": 283
         }
       },
       {
@@ -39,7 +39,7 @@
         "key": "记录时间",
         "location": {
           "startingColumn": 25,
-          "startingLine": 418
+          "startingLine": 430
         }
       },
       {
@@ -47,7 +47,7 @@
         "key": "质量或密度格式无效，暂时无法保存。",
         "location": {
           "startingColumn": 30,
-          "startingLine": 561
+          "startingLine": 573
         }
       },
       {
@@ -55,7 +55,7 @@
         "key": "精确密度",
         "location": {
           "startingColumn": 28,
-          "startingLine": 543
+          "startingLine": 555
         }
       },
       {
@@ -63,7 +63,7 @@
         "key": "质量",
         "location": {
           "startingColumn": 38,
-          "startingLine": 516
+          "startingLine": 528
         }
       },
       {
@@ -71,7 +71,7 @@
         "key": "克数",
         "location": {
           "startingColumn": 43,
-          "startingLine": 519
+          "startingLine": 531
         }
       },
       {
@@ -79,7 +79,7 @@
         "key": "密度",
         "location": {
           "startingColumn": 42,
-          "startingLine": 527
+          "startingLine": 539
         }
       },
       {
@@ -87,7 +87,7 @@
         "key": "密度",
         "location": {
           "startingColumn": 47,
-          "startingLine": 530
+          "startingLine": 542
         }
       },
       {
@@ -95,7 +95,7 @@
         "key": "估算体积",
         "location": {
           "startingColumn": 34,
-          "startingLine": 548
+          "startingLine": 560
         }
       },
       {
@@ -103,7 +103,7 @@
         "key": "Add Record",
         "location": {
           "startingColumn": 22,
-          "startingLine": 689
+          "startingLine": 701
         }
       }
     ]
