@@ -25,6 +25,9 @@ struct RecordsView: View {
     private let recordCardHorizontalInset: CGFloat = 8
     private let bigTitleFontSize: CGFloat = 34
     private let monthTitleFontSize: CGFloat = 25
+    private let filterButtonSize: CGFloat = 39
+    private let filterButtonIconSize: CGFloat = 29
+    private let filterButtonTrailingPadding: CGFloat = 14
 
     private var filteredRecords: [Record] {
         records.filter { appliedFilter.matches($0) }
@@ -97,12 +100,21 @@ struct RecordsView: View {
                         draftFilter = appliedFilter
                         isShowingFilterSheet = true
                     } label: {
-                        Image(systemName: "line.3.horizontal.decrease.circle.fill")
-                            .font(.system(size: 22, weight: .semibold))
-                            .foregroundStyle(appliedFilter.isActive ? Color.accentColor : Color.secondary)
-                            .frame(width: 30, height: 30)
+                        ZStack {
+                            if appliedFilter.isActive {
+                                Circle()
+                                    .fill(Color.accentColor)
+                            }
+
+                            Image(systemName: "line.3.horizontal.decrease.circle.fill")
+                                .font(.system(size: filterButtonIconSize, weight: .semibold))
+                                .foregroundStyle(appliedFilter.isActive ? Color.white : Color.secondary)
+                        }
+                        .frame(width: filterButtonSize, height: filterButtonSize)
+                        .contentShape(Circle())
                     }
                     .buttonStyle(.plain)
+                    .padding(.trailing, filterButtonTrailingPadding)
                 }
             }
 
