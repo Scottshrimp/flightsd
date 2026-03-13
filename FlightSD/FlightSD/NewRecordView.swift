@@ -72,6 +72,17 @@ struct NewRecordView: View {
         return "\(newRecordFixedNumberText(estimatedVolume, fractionDigits: 2)) mL"
     }
 
+    private var preciseDensityToggleBinding: Binding<Bool> {
+        Binding(
+            get: { usePreciseDensity },
+            set: { newValue in
+                withAnimation(.easeInOut(duration: 0.13)) {
+                    usePreciseDensity = newValue
+                }
+            }
+        )
+    }
+
     var body: some View {
         NavigationStack {
             ScrollViewReader { proxy in
@@ -222,6 +233,7 @@ struct NewRecordView: View {
                                                         .textFieldStyle(.roundedBorder)
                                                         .frame(width: compactFieldWidth)
                                                 }
+                                                .transition(.opacity)
                                             }
 
                                             Spacer(minLength: 0)
@@ -229,7 +241,7 @@ struct NewRecordView: View {
                                     }
                                     .frame(height: 62)
 
-                                    Toggle("精确密度", isOn: $usePreciseDensity)
+                                    Toggle("精确密度", isOn: preciseDensityToggleBinding)
                                         .font(.subheadline)
 
                                     HStack {

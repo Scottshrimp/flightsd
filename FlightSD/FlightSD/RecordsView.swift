@@ -14,8 +14,8 @@ struct RecordsView: View {
     private let sectionSpacing: CGFloat = 32
     private let sectionHeaderSpacing: CGFloat = 18
     private let monthGroupSpacing: CGFloat = 24
-    private let bigTitleFontSize: CGFloat = 36
-    private let monthTitleFontSize: CGFloat = 33
+    private let bigTitleFontSize: CGFloat = 34
+    private let monthTitleFontSize: CGFloat = 25
 
     private var groupedRecords: RecordGroups {
         RecordGroups(records: records, calendar: .current)
