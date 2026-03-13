@@ -618,6 +618,8 @@ struct FieldRow<Content: View>: View {
     let filledValue: String?
     @ViewBuilder let content: () -> Content
 
+    private let cardCornerRadius: CGFloat = 14
+
     private var isExpanded: Bool {
         activeField == index
     }
@@ -655,23 +657,27 @@ struct FieldRow<Content: View>: View {
             .buttonStyle(.plain)
 
             if isExpanded {
-                Divider()
-                    .padding(.horizontal, 18)
+                VStack(spacing: 0) {
+                    Divider()
+                        .padding(.horizontal, 18)
 
-                content()
-                    .padding(.horizontal, 18)
-                    .padding(.vertical, 18)
-                    .transition(.move(edge: .top).combined(with: .opacity))
+                    content()
+                        .padding(.horizontal, 18)
+                        .padding(.vertical, 18)
+                }
+                .clipped()
+                .transition(.move(edge: .top).combined(with: .opacity))
             }
         }
         .background {
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
+            RoundedRectangle(cornerRadius: cardCornerRadius, style: .continuous)
                 .fill(.thinMaterial)
         }
         .overlay {
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
+            RoundedRectangle(cornerRadius: cardCornerRadius, style: .continuous)
                 .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
         }
+        .clipShape(RoundedRectangle(cornerRadius: cardCornerRadius, style: .continuous))
         .shadow(color: .black.opacity(0.04), radius: 12, y: 6)
     }
 }

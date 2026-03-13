@@ -115,6 +115,8 @@ private struct RecordEntryCard: View {
     @Environment(\.modelContext) private var modelContext
     @State private var draft: RecordDraft
 
+    private let cardCornerRadius: CGFloat = 14
+
     init(record: Record, isExpanded: Bool, onToggle: @escaping () -> Void, onDone: @escaping () -> Void) {
         self.record = record
         self.isExpanded = isExpanded
@@ -136,23 +138,27 @@ private struct RecordEntryCard: View {
             .buttonStyle(.plain)
 
             if isExpanded {
-                Divider()
-                    .padding(.horizontal, 18)
+                VStack(spacing: 0) {
+                    Divider()
+                        .padding(.horizontal, 18)
 
-                RecordInlineEditor(draft: $draft) {
-                    saveChanges()
+                    RecordInlineEditor(draft: $draft) {
+                        saveChanges()
+                    }
                 }
+                .clipped()
                 .transition(.move(edge: .top).combined(with: .opacity))
             }
         }
         .background {
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
+            RoundedRectangle(cornerRadius: cardCornerRadius, style: .continuous)
                 .fill(.thinMaterial)
         }
         .overlay {
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
+            RoundedRectangle(cornerRadius: cardCornerRadius, style: .continuous)
                 .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
         }
+        .clipShape(RoundedRectangle(cornerRadius: cardCornerRadius, style: .continuous))
         .shadow(color: .black.opacity(0.04), radius: 12, y: 6)
         .onChange(of: isExpanded) { _, expanded in
             if expanded {
