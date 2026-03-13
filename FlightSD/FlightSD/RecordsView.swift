@@ -23,23 +23,22 @@ struct RecordsView: View {
                     groupedSection(
                         title: "今天",
                         records: groupedRecords.today,
-                        emptyText: "今天还没有记录"
+                        emptyText: "今天还没有记录",
+                        proxy: proxy
                     )
 
                     groupedSection(
                         title: "过去一周",
                         records: groupedRecords.pastWeek,
-                        emptyText: "过去一周还没有记录"
+                        emptyText: "过去一周还没有记录",
+                        proxy: proxy
                     )
 
-                    earlierSection
+                    earlierSection(proxy: proxy)
                 }
                 .padding(.horizontal, 10)
                 .padding(.top, 24)
                 .padding(.bottom, 20)
-            }
-            .onChange(of: expandedRecordID) { _, newValue in
-                scrollToExpandedRecord(newValue, using: proxy)
             }
             .safeAreaInset(edge: .bottom, spacing: 0) {
                 AddRecordBar {
@@ -50,7 +49,7 @@ struct RecordsView: View {
     }
 
     @ViewBuilder
-    private func groupedSection(title: String, records: [Record], emptyText: String) -> some View {
+    private func groupedSection(title: String, records: [Record], emptyText: String, proxy: ScrollViewProxy) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             Text(title)
                 .font(.system(.title, design: .rounded).weight(.bold))
@@ -63,8 +62,8 @@ struct RecordsView: View {
                         RecordEntryCard(
                             record: record,
                             isExpanded: expandedRecordID == record.persistentModelID,
-                            onToggle: { toggle(record) },
-                            onDone: { expandedRecordID = nil }
+                            onToggle: { toggle(record, using: proxy) },
+                            onDone: { finishEditing(record, using: proxy) }
                         )
                         .id(record.persistentModelID)
                     }
@@ -74,7 +73,7 @@ struct RecordsView: View {
     }
 
     @ViewBuilder
-    private var earlierSection: some View {
+    private func earlierSection(proxy: ScrollViewProxy) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("更久之前")
                 .font(.system(.title, design: .rounded).weight(.bold))
@@ -94,8 +93,8 @@ struct RecordsView: View {
                                     RecordEntryCard(
                                         record: record,
                                         isExpanded: expandedRecordID == record.persistentModelID,
-                                        onToggle: { toggle(record) },
-                                        onDone: { expandedRecordID = nil }
+                                        onToggle: { toggle(record, using: proxy) },
+                                        onDone: { finishEditing(record, using: proxy) }
                                     )
                                     .id(record.persistentModelID)
                                 }
@@ -107,7 +106,7 @@ struct RecordsView: View {
         }
     }
 
-    private func toggle(_ record: Record) {
+    private func toggle(_ record: Record, using proxy: ScrollViewProxy) {
         withAnimation(.spring(response: 0.32, dampingFraction: 0.82)) {
             if expandedRecordID == record.persistentModelID {
                 expandedRecordID = nil
@@ -115,13 +114,23 @@ struct RecordsView: View {
                 expandedRecordID = record.persistentModelID
             }
         }
+
+        if expandedRecordID != nil {
+            scrollToRecord(record.persistentModelID, using: proxy, delay: 0.08)
+        }
     }
 
-    private func scrollToExpandedRecord(_ id: PersistentIdentifier?, using proxy: ScrollViewProxy) {
-        guard let id else { return }
+    private func finishEditing(_ record: Record, using proxy: ScrollViewProxy) {
+        withAnimation(.spring(response: 0.28, dampingFraction: 0.84)) {
+            expandedRecordID = nil
+        }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) {
-            withAnimation(.easeInOut(duration: 0.32)) {
+        scrollToRecord(record.persistentModelID, using: proxy, delay: 0.01)
+    }
+
+    private func scrollToRecord(_ id: PersistentIdentifier, using proxy: ScrollViewProxy, delay: Double) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+            withAnimation(.easeInOut(duration: 0.28)) {
                 proxy.scrollTo(id, anchor: scrollAnchor)
             }
         }
@@ -337,11 +346,9 @@ private struct RecordInlineEditor: View {
 
                     Spacer(minLength: 12)
 
-                    Button("Done") {
+                    EditorActionButton(title: "Done", variant: .prominent, isDisabled: !draft.canSave) {
                         onDone()
                     }
-                    .buttonStyle(EditorActionButtonStyle(variant: .prominent))
-                    .disabled(!draft.canSave)
                 }
             }
 
@@ -447,18 +454,15 @@ private struct RecordInlineEditor: View {
             }
 
             HStack {
-                Button("Delete") {
+                EditorActionButton(title: "Delete", variant: .destructive) {
                     onDelete()
                 }
-                .buttonStyle(EditorActionButtonStyle(variant: .destructive))
 
                 Spacer()
 
-                Button("Done") {
+                EditorActionButton(title: "Done", variant: .prominent, isDisabled: !draft.canSave) {
                     onDone()
                 }
-                .buttonStyle(EditorActionButtonStyle(variant: .prominent))
-                .disabled(!draft.canSave)
             }
         }
         .padding(.horizontal, 18)
@@ -640,7 +644,72 @@ private struct EditorBlock<Content: View>: View {
     }
 }
 
-private struct EditorActionButtonStyle: ButtonStyle {
+private struct EditorActionButton: View {
+    let title: String
+    let variant: EditorActionButtonStyle.Variant
+    var isDisabled: Bool = false
+    let action: () -> Void
+
+    @GestureState private var isPressed = false
+    @State private var didTriggerImpact = false
+
+    var body: some View {
+        Button(title) {
+            action()
+        }
+        .buttonStyle(.plain)
+        .disabled(isDisabled)
+        .font(.subheadline.weight(.semibold))
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
+        .background(EditorActionButtonStyle(variant: variant).backgroundColor(isPressed: effectivePressed, isDisabled: isDisabled))
+        .overlay {
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .strokeBorder(
+                    EditorActionButtonStyle(variant: variant).borderColor(isPressed: effectivePressed, isDisabled: isDisabled),
+                    lineWidth: variant == .destructive ? 1 : 0
+                )
+        }
+        .foregroundStyle(EditorActionButtonStyle(variant: variant).foregroundColor(isDisabled: isDisabled))
+        .scaleEffect(effectivePressed ? 0.96 : 1)
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .contentShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .animation(.easeOut(duration: 0.12), value: effectivePressed)
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 0)
+                .updating($isPressed) { _, state, _ in
+                    if !isDisabled {
+                        state = true
+                    }
+                }
+                .onChanged { _ in
+                    guard !isDisabled, !didTriggerImpact else { return }
+                    didTriggerImpact = true
+                    triggerImpact()
+                }
+                .onEnded { _ in
+                    didTriggerImpact = false
+                }
+        )
+        .onChange(of: effectivePressed) { _, pressed in
+            if !pressed {
+                didTriggerImpact = false
+            }
+        }
+    }
+
+    private var effectivePressed: Bool {
+        !isDisabled && isPressed
+    }
+
+    private func triggerImpact() {
+#if canImport(UIKit)
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+#endif
+    }
+}
+
+private struct EditorActionButtonStyle {
     enum Variant {
         case prominent
         case destructive
@@ -648,59 +717,34 @@ private struct EditorActionButtonStyle: ButtonStyle {
 
     let variant: Variant
 
-    func makeBody(configuration: Configuration) -> some View {
-        let isPressed = configuration.isPressed
-
-        configuration.label
-            .font(.subheadline.weight(.semibold))
-            .padding(.horizontal, 14)
-            .padding(.vertical, 8)
-            .background(backgroundColor(isPressed: isPressed))
-            .overlay {
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .strokeBorder(borderColor(isPressed: isPressed), lineWidth: variant == .destructive ? 1 : 0)
-            }
-            .foregroundStyle(foregroundColor)
-            .scaleEffect(isPressed ? 0.96 : 1)
-            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-            .animation(.easeOut(duration: 0.12), value: isPressed)
-            .onChange(of: isPressed) { _, pressed in
-                guard pressed else { return }
-                triggerImpact()
-            }
-    }
-
-    private func backgroundColor(isPressed: Bool) -> Color {
+    func backgroundColor(isPressed: Bool, isDisabled: Bool) -> Color {
         switch variant {
         case .prominent:
-            return Color.accentColor.opacity(isPressed ? 0.78 : 1)
+            let baseOpacity = isDisabled ? 0.4 : 1.0
+            return Color.accentColor.opacity((isPressed ? 0.78 : 1) * baseOpacity)
         case .destructive:
-            return Color.red.opacity(isPressed ? 0.18 : 0.10)
+            let baseOpacity = isDisabled ? 0.45 : 1.0
+            return Color.red.opacity((isPressed ? 0.18 : 0.10) * baseOpacity)
         }
     }
 
-    private func borderColor(isPressed: Bool) -> Color {
+    func borderColor(isPressed: Bool, isDisabled: Bool) -> Color {
         switch variant {
         case .prominent:
             return .clear
         case .destructive:
-            return Color.red.opacity(isPressed ? 0.72 : 0.82)
+            let baseOpacity = isDisabled ? 0.35 : 1.0
+            return Color.red.opacity((isPressed ? 0.72 : 0.82) * baseOpacity)
         }
     }
 
-    private var foregroundColor: Color {
+    func foregroundColor(isDisabled: Bool) -> Color {
         switch variant {
         case .prominent:
-            return .white
+            return Color.white.opacity(isDisabled ? 0.75 : 1)
         case .destructive:
-            return .red
+            return Color.red.opacity(isDisabled ? 0.55 : 1)
         }
-    }
-
-    private func triggerImpact() {
-#if canImport(UIKit)
-        UIImpactFeedbackGenerator(style: .light).impactOccurred()
-#endif
     }
 }
 
