@@ -108,7 +108,7 @@ struct NewRecordView: View {
                                 activeField: $activeField,
                                 filledValue: activeField != 1 ? mediaType.map(mediaTypeLabel) : nil
                             ) {
-                                selectionGrid(
+                                horizontalSelectionRow(
                                     options: availableMediaTypes,
                                     label: mediaTypeLabel,
                                     selection: mediaType
@@ -394,6 +394,28 @@ struct NewRecordView: View {
                 .buttonStyle(SelectionButtonStyle(isSelected: selection == option))
             }
         }
+    }
+
+    @ViewBuilder
+    private func horizontalSelectionRow<T: Hashable>(
+        options: [T],
+        label: @escaping (T) -> String,
+        selection: T?,
+        onSelect: @escaping (T) -> Void
+    ) -> some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 12) {
+                ForEach(options, id: \.self) { option in
+                    Button(label(option)) {
+                        onSelect(option)
+                    }
+                    .buttonStyle(SelectionButtonStyle(isSelected: selection == option))
+                    .frame(minWidth: 88)
+                }
+            }
+            .padding(.vertical, 2)
+        }
+        .scrollClipDisabled()
     }
 
     @ViewBuilder
