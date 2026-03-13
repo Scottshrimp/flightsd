@@ -168,11 +168,13 @@ private struct RecordEntryCard: View {
                 draft = RecordDraft(record: record)
             }
         }
-        .alert(deleteConfirmationTitle, isPresented: $showDeleteConfirmation) {
+        .alert("是否要删除记录", isPresented: $showDeleteConfirmation) {
             Button("Cancel", role: .cancel) {}
             Button("Confirm", role: .destructive) {
                 deleteRecord()
             }
+        } message: {
+            Text(RecordPresentation.deletePromptTimestamp(record.timestamp))
         }
     }
 
@@ -201,16 +203,14 @@ private struct RecordEntryCard: View {
     }
 
     private func deleteRecord() {
-        modelContext.delete(record)
-        try? modelContext.save()
-
         withAnimation(.spring(response: 0.28, dampingFraction: 0.84)) {
             onDone()
         }
-    }
 
-    private var deleteConfirmationTitle: String {
-        "是否要删除记录\(RecordPresentation.deletePromptTimestamp(record.timestamp))？"
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) {
+            modelContext.delete(record)
+            try? modelContext.save()
+        }
     }
 }
 
