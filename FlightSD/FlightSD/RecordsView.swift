@@ -190,30 +190,50 @@ private struct RecordSummaryRow: View {
     let record: Record
 
     var body: some View {
-        HStack(alignment: .center, spacing: 16) {
-            VStack(alignment: .leading, spacing: 6) {
-                Text(RecordPresentation.recordTitle(for: record.timestamp))
-                    .font(.headline)
-                    .foregroundStyle(.primary)
+        HStack(alignment: .center, spacing: 12) {
+            TimestampLine(timestamp: record.timestamp)
 
-                Text(RecordPresentation.recordSubtitle(for: record))
-                    .font(.subheadline)
+            Spacer(minLength: 8)
+
+            HStack(alignment: .center, spacing: 10) {
+                VStack(alignment: .trailing, spacing: 4) {
+                    MetricDotStrip(metrics: RecordPresentation.metricDots(for: record))
+
+                    Text(RecordPresentation.metricSummary(for: record))
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+
+                Text(RecordPresentation.mediaCategory(for: record))
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                    .fixedSize(horizontal: true, vertical: false)
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .contentShape(Rectangle())
+    }
+}
+
+private struct TimestampLine: View {
+    let timestamp: Date
+
+    var body: some View {
+        HStack(spacing: 6) {
+            if let dateText = RecordPresentation.dateText(for: timestamp) {
+                Text(dateText)
+                    .font(.caption2.weight(.medium))
                     .foregroundStyle(.secondary)
             }
 
-            Spacer(minLength: 12)
-
-            HStack(spacing: 12) {
-                MetricDotStrip(metrics: RecordPresentation.metricDots(for: record))
-
-                Text(RecordPresentation.mediaCategory(for: record))
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.primary)
-            }
+            Text(RecordPresentation.timeText(for: timestamp))
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.primary)
         }
-        .padding(.horizontal, 18)
-        .padding(.vertical, 16)
-        .contentShape(Rectangle())
+        .lineLimit(1)
     }
 }
 
@@ -388,12 +408,22 @@ private struct MetricEditorRow: View {
 private struct MetricDotStrip: View {
     let metrics: [MetricDot]
 
+    private var rows: [[MetricDot]] {
+        stride(from: 0, to: metrics.count, by: 4).map { start in
+            Array(metrics[start ..< min(start + 4, metrics.count)])
+        }
+    }
+
     var body: some View {
-        HStack(spacing: 6) {
-            ForEach(Array(metrics.enumerated()), id: \.offset) { _, metric in
-                Circle()
-                    .fill(zoneColor(for: metric.zone, zoneCount: metric.zoneCount))
-                    .frame(width: 10, height: 10)
+        VStack(alignment: .trailing, spacing: 3) {
+            ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
+                HStack(spacing: 4) {
+                    ForEach(Array(row.enumerated()), id: \.offset) { _, metric in
+                        Circle()
+                            .fill(zoneColor(for: metric.zone, zoneCount: metric.zoneCount))
+                            .frame(width: 6, height: 6)
+                    }
+                }
             }
         }
     }
@@ -628,17 +658,17 @@ private enum RecordPresentation {
         return formatter
     }()
 
-    private static let todayFormatter: DateFormatter = {
+    private static let timeFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "zh_CN")
         formatter.dateFormat = "HH:mm"
         return formatter
     }()
 
-    private static let pastFormatter: DateFormatter = {
+    private static let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "zh_CN")
-        formatter.dateFormat = "M月d日 HH:mm"
+        formatter.dateFormat = "M月d日"
         return formatter
     }()
 
@@ -672,15 +702,19 @@ private enum RecordPresentation {
         dimensionLabel(record.dimension) + mediaTypeLabel(record.mediaType)
     }
 
-    static func recordTitle(for date: Date) -> String {
+    static func dateText(for date: Date) -> String? {
         let calendar = Calendar.current
-        if calendar.isDateInToday(date) {
-            return todayFormatter.string(from: date)
+        guard !calendar.isDateInToday(date) else {
+            return nil
         }
-        return pastFormatter.string(from: date)
+        return dateFormatter.string(from: date)
     }
 
-    static func recordSubtitle(for record: Record) -> String {
+    static func timeText(for date: Date) -> String {
+        timeFormatter.string(from: date)
+    }
+
+    static func metricSummary(for record: Record) -> String {
         let mass = numberText(record.mass, maxFractionDigits: 1)
         let estVol = fixedNumberText(record.estVol, fractionDigits: 2)
         return "\(mass) g · \(estVol) mL"
