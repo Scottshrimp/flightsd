@@ -419,26 +419,12 @@ private struct RecordEntryCard: View {
             .buttonStyle(.plain)
 
             if keepsExpandedEditorMounted {
-                VStack(spacing: 0) {
-                    Divider()
-                        .padding(.horizontal, 18)
-
-                    RecordInlineEditor(draft: $draft) {
-                        saveChanges(scrollsToNextRecord: false)
-                    } onBottomDone: {
-                        saveChanges(scrollsToNextRecord: true)
-                    } onDelete: {
-                        showDeleteConfirmation = true
-                    }
-                }
-                .background {
-                    GeometryReader { geometry in
-                        Color.clear
-                            .preference(key: RecordExpandedContentHeightPreferenceKey.self, value: geometry.size.height)
-                    }
-                }
+                editorContent
                 .frame(height: visibleExpandedHeight, alignment: .top)
                 .clipped()
+                .background(alignment: .top) {
+                    editorMeasurementLayer
+                }
             }
         }
         .background {
@@ -519,6 +505,35 @@ private struct RecordEntryCard: View {
 
     private var editorAnimation: Animation {
         .easeInOut(duration: editorAnimationDuration)
+    }
+
+    private var editorContent: some View {
+        VStack(spacing: 0) {
+            Divider()
+                .padding(.horizontal, 18)
+
+            RecordInlineEditor(draft: $draft) {
+                saveChanges(scrollsToNextRecord: false)
+            } onBottomDone: {
+                saveChanges(scrollsToNextRecord: true)
+            } onDelete: {
+                showDeleteConfirmation = true
+            }
+        }
+    }
+
+    private var editorMeasurementLayer: some View {
+        editorContent
+            .fixedSize(horizontal: false, vertical: true)
+            .hidden()
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
+            .background {
+                GeometryReader { geometry in
+                    Color.clear
+                        .preference(key: RecordExpandedContentHeightPreferenceKey.self, value: geometry.size.height)
+                }
+            }
     }
 
     private func syncExpandedEditor(animated: Bool) {
