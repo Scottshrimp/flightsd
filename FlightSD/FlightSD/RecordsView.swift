@@ -267,7 +267,7 @@ private final class RecordsScrollBridge {
                 return
             }
 
-            let delta = anchorY - currentY
+            let delta = currentY - anchorY
             guard abs(delta) > 0.5 else { return }
 
             let minOffsetY = -scrollView.adjustedContentInset.top
