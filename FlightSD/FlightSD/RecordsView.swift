@@ -428,9 +428,7 @@ private struct AddRecordBar: View {
     }
 
     var body: some View {
-        HStack(spacing: 0) {
-            Spacer(minLength: 0)
-
+        GeometryReader { proxy in
             Button {
                 action()
             } label: {
@@ -451,15 +449,15 @@ private struct AddRecordBar: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .frame(width: UIScreen.main.bounds.width * 0.85)
+            .frame(width: proxy.size.width * 0.85)
             .background {
                 ZStack {
                     Rectangle()
                         .fill(.ultraThinMaterial)
 
-                    GeometryReader { proxy in
+                    GeometryReader { buttonProxy in
                         Rectangle()
-                            .fill(diagonalGradient(in: proxy.size))
+                            .fill(diagonalGradient(in: buttonProxy.size))
                             .saturation(1.3)
                             .brightness(-0.05)
                             .opacity(0.60)
@@ -471,9 +469,9 @@ private struct AddRecordBar: View {
                     .fill(Color.white.opacity(0.18))
                     .frame(height: 1)
             }
-            Spacer(minLength: 0)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .ignoresSafeArea(edges: .horizontal)
+        .frame(height: 44)
     }
 }
 
