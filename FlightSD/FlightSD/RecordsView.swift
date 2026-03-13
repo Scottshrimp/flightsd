@@ -403,7 +403,7 @@ private struct RecordInlineEditor: View {
         Binding(
             get: { draft.usePreciseDensity },
             set: { newValue in
-                withAnimation(.easeInOut(duration: 0.2)) {
+                withAnimation(.easeInOut(duration: 0.13)) {
                     draft.usePreciseDensity = newValue
                 }
             }
