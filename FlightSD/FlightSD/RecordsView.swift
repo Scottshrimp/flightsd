@@ -7,7 +7,7 @@ struct RecordsView: View {
 
     @State private var expandedRecordID: PersistentIdentifier?
 
-    private let scrollAnchor = UnitPoint(x: 0.5, y: 0.5)
+    private let scrollAnchor = UnitPoint(x: 0.5, y: 0.14)
 
     private var groupedRecords: RecordGroups {
         RecordGroups(records: records, calendar: .current)
