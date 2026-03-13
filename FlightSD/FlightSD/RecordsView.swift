@@ -63,7 +63,8 @@ struct RecordsView: View {
                             record: record,
                             isExpanded: expandedRecordID == record.persistentModelID,
                             onToggle: { toggle(record, using: proxy) },
-                            onDone: { finishEditing(record, using: proxy) }
+                            onTopDone: { finishEditing(record) },
+                            onBottomDone: { finishEditingAndScrollToNext(after: record, using: proxy) }
                         )
                         .id(record.persistentModelID)
                     }
@@ -94,7 +95,8 @@ struct RecordsView: View {
                                         record: record,
                                         isExpanded: expandedRecordID == record.persistentModelID,
                                         onToggle: { toggle(record, using: proxy) },
-                                        onDone: { finishEditing(record, using: proxy) }
+                                        onTopDone: { finishEditing(record) },
+                                        onBottomDone: { finishEditingAndScrollToNext(after: record, using: proxy) }
                                     )
                                     .id(record.persistentModelID)
                                 }
@@ -120,12 +122,20 @@ struct RecordsView: View {
         }
     }
 
-    private func finishEditing(_ record: Record, using proxy: ScrollViewProxy) {
+    private func finishEditing(_ record: Record) {
+        withAnimation(.spring(response: 0.28, dampingFraction: 0.84)) {
+            expandedRecordID = nil
+        }
+    }
+
+    private func finishEditingAndScrollToNext(after record: Record, using proxy: ScrollViewProxy) {
         withAnimation(.spring(response: 0.28, dampingFraction: 0.84)) {
             expandedRecordID = nil
         }
 
-        scrollToRecord(record.persistentModelID, using: proxy, delay: 0.01)
+        if let targetID = nextRecordID(after: record) {
+            scrollToRecord(targetID, using: proxy, delay: 0.01)
+        }
     }
 
     private func scrollToRecord(_ id: PersistentIdentifier, using proxy: ScrollViewProxy, delay: Double) {
@@ -135,13 +145,24 @@ struct RecordsView: View {
             }
         }
     }
+
+    private func nextRecordID(after record: Record) -> PersistentIdentifier? {
+        guard let index = records.firstIndex(where: { $0.persistentModelID == record.persistentModelID }) else {
+            return nil
+        }
+
+        let nextIndex = records.index(after: index)
+        guard nextIndex < records.endIndex else { return nil }
+        return records[nextIndex].persistentModelID
+    }
 }
 
 private struct RecordEntryCard: View {
     let record: Record
     let isExpanded: Bool
     let onToggle: () -> Void
-    let onDone: () -> Void
+    let onTopDone: () -> Void
+    let onBottomDone: () -> Void
 
     @Environment(\.modelContext) private var modelContext
     @State private var draft: RecordDraft
@@ -149,11 +170,12 @@ private struct RecordEntryCard: View {
 
     private let cardCornerRadius: CGFloat = 14
 
-    init(record: Record, isExpanded: Bool, onToggle: @escaping () -> Void, onDone: @escaping () -> Void) {
+    init(record: Record, isExpanded: Bool, onToggle: @escaping () -> Void, onTopDone: @escaping () -> Void, onBottomDone: @escaping () -> Void) {
         self.record = record
         self.isExpanded = isExpanded
         self.onToggle = onToggle
-        self.onDone = onDone
+        self.onTopDone = onTopDone
+        self.onBottomDone = onBottomDone
         _draft = State(initialValue: RecordDraft(record: record))
     }
 
@@ -175,7 +197,9 @@ private struct RecordEntryCard: View {
                         .padding(.horizontal, 18)
 
                     RecordInlineEditor(draft: $draft) {
-                        saveChanges()
+                        saveChanges(scrollsToNextRecord: false)
+                    } onBottomDone: {
+                        saveChanges(scrollsToNextRecord: true)
                     } onDelete: {
                         showDeleteConfirmation = true
                     }
@@ -209,7 +233,7 @@ private struct RecordEntryCard: View {
         }
     }
 
-    private func saveChanges() {
+    private func saveChanges(scrollsToNextRecord: Bool) {
         guard draft.canSave else { return }
 
         record.timestamp = draft.timestamp
@@ -228,15 +252,17 @@ private struct RecordEntryCard: View {
 
         try? modelContext.save()
 
-        withAnimation(.spring(response: 0.28, dampingFraction: 0.84)) {
-            onDone()
+        if scrollsToNextRecord {
+            onBottomDone()
+        } else {
+            withAnimation(.spring(response: 0.28, dampingFraction: 0.84)) {
+                onTopDone()
+            }
         }
     }
 
     private func deleteRecord() {
-        withAnimation(.spring(response: 0.28, dampingFraction: 0.84)) {
-            onDone()
-        }
+        onBottomDone()
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
             modelContext.delete(record)
@@ -330,7 +356,8 @@ private struct TimestampLine: View {
 
 private struct RecordInlineEditor: View {
     @Binding var draft: RecordDraft
-    let onDone: () -> Void
+    let onTopDone: () -> Void
+    let onBottomDone: () -> Void
     let onDelete: () -> Void
 
     var body: some View {
@@ -347,7 +374,7 @@ private struct RecordInlineEditor: View {
                     Spacer(minLength: 12)
 
                     EditorActionButton(title: "Done", variant: .prominent, isDisabled: !draft.canSave) {
-                        onDone()
+                        onTopDone()
                     }
                 }
             }
@@ -461,7 +488,7 @@ private struct RecordInlineEditor: View {
                 Spacer()
 
                 EditorActionButton(title: "Done", variant: .prominent, isDisabled: !draft.canSave) {
-                    onDone()
+                    onBottomDone()
                 }
             }
         }
