@@ -9,6 +9,7 @@ struct RecordsView: View {
     @Query(sort: \Record.timestamp, order: .reverse) private var records: [Record]
 
     @State private var expandedRecordID: PersistentIdentifier?
+    @State private var scrollBridge = RecordsScrollBridge()
 
     private let scrollAnchor = UnitPoint(x: 0.5, y: -0.03)
 
@@ -40,6 +41,15 @@ struct RecordsView: View {
                 .padding(.top, 24)
                 .padding(.bottom, 20)
             }
+            .coordinateSpace(name: "RecordsScrollViewport")
+            .background {
+                RecordsScrollIntrospectionView { scrollView in
+                    scrollBridge.scrollView = scrollView
+                }
+            }
+            .onPreferenceChange(RecordViewportMinYPreferenceKey.self) { newValue in
+                scrollBridge.viewportMinY = newValue
+            }
             .safeAreaInset(edge: .bottom, spacing: 0) {
                 AddRecordBar {
                     appState.showNewRecord = true
@@ -64,9 +74,18 @@ struct RecordsView: View {
                             isExpanded: expandedRecordID == record.persistentModelID,
                             onToggle: { toggle(record, using: proxy) },
                             onTopDone: { finishEditing(record) },
-                            onBottomDone: { finishEditingAndScrollToNext(after: record, using: proxy) }
+                            onBottomDone: { finishEditingAnchoringNext(after: record) }
                         )
                         .id(record.persistentModelID)
+                        .background(alignment: .top) {
+                            GeometryReader { geometry in
+                                Color.clear
+                                    .preference(
+                                        key: RecordViewportMinYPreferenceKey.self,
+                                        value: [record.persistentModelID: geometry.frame(in: .named("RecordsScrollViewport")).minY]
+                                    )
+                            }
+                        }
                     }
                 }
             }
@@ -96,9 +115,18 @@ struct RecordsView: View {
                                         isExpanded: expandedRecordID == record.persistentModelID,
                                         onToggle: { toggle(record, using: proxy) },
                                         onTopDone: { finishEditing(record) },
-                                        onBottomDone: { finishEditingAndScrollToNext(after: record, using: proxy) }
+                                        onBottomDone: { finishEditingAnchoringNext(after: record) }
                                     )
                                     .id(record.persistentModelID)
+                                    .background(alignment: .top) {
+                                        GeometryReader { geometry in
+                                            Color.clear
+                                                .preference(
+                                                    key: RecordViewportMinYPreferenceKey.self,
+                                                    value: [record.persistentModelID: geometry.frame(in: .named("RecordsScrollViewport")).minY]
+                                                )
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -128,13 +156,13 @@ struct RecordsView: View {
         }
     }
 
-    private func finishEditingAndScrollToNext(after record: Record, using proxy: ScrollViewProxy) {
-        withAnimation(.spring(response: 0.28, dampingFraction: 0.84)) {
-            expandedRecordID = nil
+    private func finishEditingAnchoringNext(after record: Record) {
+        if let targetID = nextRecordID(after: record) {
+            scrollBridge.startAnchoring(targetID: targetID, duration: 0.42)
         }
 
-        if let targetID = nextRecordID(after: record) {
-            scrollToRecord(targetID, using: proxy, delay: 0.01)
+        withAnimation(.spring(response: 0.28, dampingFraction: 0.84)) {
+            expandedRecordID = nil
         }
     }
 
@@ -154,6 +182,105 @@ struct RecordsView: View {
         let nextIndex = records.index(after: index)
         guard nextIndex < records.endIndex else { return nil }
         return records[nextIndex].persistentModelID
+    }
+}
+
+private struct RecordViewportMinYPreferenceKey: PreferenceKey {
+    static var defaultValue: [PersistentIdentifier: CGFloat] = [:]
+
+    static func reduce(value: inout [PersistentIdentifier: CGFloat], nextValue: () -> [PersistentIdentifier: CGFloat]) {
+        value.merge(nextValue(), uniquingKeysWith: { _, new in new })
+    }
+}
+
+private struct RecordsScrollIntrospectionView: UIViewRepresentable {
+    let onResolve: (UIScrollView) -> Void
+
+    func makeUIView(context: Context) -> RecordsScrollResolverView {
+        let view = RecordsScrollResolverView()
+        view.onResolve = onResolve
+        return view
+    }
+
+    func updateUIView(_ uiView: RecordsScrollResolverView, context: Context) {
+        uiView.onResolve = onResolve
+        uiView.resolveScrollViewIfNeeded()
+    }
+}
+
+private final class RecordsScrollResolverView: UIView {
+    var onResolve: ((UIScrollView) -> Void)?
+
+    override func didMoveToWindow() {
+        super.didMoveToWindow()
+        resolveScrollViewIfNeeded()
+    }
+
+    func resolveScrollViewIfNeeded() {
+        DispatchQueue.main.async { [weak self] in
+            guard let self, let scrollView = self.enclosingScrollView() else { return }
+            self.onResolve?(scrollView)
+        }
+    }
+
+    private func enclosingScrollView() -> UIScrollView? {
+        var view = superview
+        while let current = view {
+            if let scrollView = current as? UIScrollView {
+                return scrollView
+            }
+            view = current.superview
+        }
+        return nil
+    }
+}
+
+private final class RecordsScrollBridge {
+    weak var scrollView: UIScrollView?
+    var viewportMinY: [PersistentIdentifier: CGFloat] = [:]
+
+    private var anchorToken = UUID()
+
+    func startAnchoring(targetID: PersistentIdentifier, duration: Double) {
+        guard viewportMinY[targetID] != nil else { return }
+
+        let anchorY = viewportMinY[targetID]
+        let token = UUID()
+        anchorToken = token
+        let startTime = CACurrentMediaTime()
+
+        func step() {
+            guard self.anchorToken == token else { return }
+            defer {
+                if CACurrentMediaTime() - startTime < duration {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + (1.0 / 120.0)) {
+                        step()
+                    }
+                }
+            }
+
+            guard
+                let scrollView = self.scrollView,
+                let anchorY,
+                let currentY = self.viewportMinY[targetID]
+            else {
+                return
+            }
+
+            let delta = currentY - anchorY
+            guard abs(delta) > 0.5 else { return }
+
+            let minOffsetY = -scrollView.adjustedContentInset.top
+            let maxOffsetY = max(
+                scrollView.contentSize.height - scrollView.bounds.height + scrollView.adjustedContentInset.bottom,
+                minOffsetY
+            )
+            let adjustedOffsetY = min(max(scrollView.contentOffset.y + delta, minOffsetY), maxOffsetY)
+
+            scrollView.setContentOffset(CGPoint(x: scrollView.contentOffset.x, y: adjustedOffsetY), animated: false)
+        }
+
+        step()
     }
 }
 
