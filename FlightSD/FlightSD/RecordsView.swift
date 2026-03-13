@@ -203,6 +203,7 @@ private struct RecordSummaryRow: View {
                         .font(.caption.weight(.medium))
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
+                        .fixedSize(horizontal: true, vertical: false)
                 }
 
                 Text(RecordPresentation.mediaCategory(for: record))
@@ -211,6 +212,7 @@ private struct RecordSummaryRow: View {
                     .lineLimit(1)
                     .fixedSize(horizontal: true, vertical: false)
             }
+            .layoutPriority(1)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 11)
@@ -234,6 +236,7 @@ private struct TimestampLine: View {
                 .foregroundStyle(.primary)
         }
         .lineLimit(1)
+        .layoutPriority(0)
     }
 }
 
