@@ -114,6 +114,7 @@ private struct RecordEntryCard: View {
 
     @Environment(\.modelContext) private var modelContext
     @State private var draft: RecordDraft
+    @State private var showDeleteConfirmation = false
 
     private let cardCornerRadius: CGFloat = 14
 
@@ -145,7 +146,7 @@ private struct RecordEntryCard: View {
                     RecordInlineEditor(draft: $draft) {
                         saveChanges()
                     } onDelete: {
-                        deleteRecord()
+                        showDeleteConfirmation = true
                     }
                 }
                 .clipped()
@@ -165,6 +166,12 @@ private struct RecordEntryCard: View {
         .onChange(of: isExpanded) { _, expanded in
             if expanded {
                 draft = RecordDraft(record: record)
+            }
+        }
+        .alert(deleteConfirmationTitle, isPresented: $showDeleteConfirmation) {
+            Button("Cancel", role: .cancel) {}
+            Button("Confirm", role: .destructive) {
+                deleteRecord()
             }
         }
     }
@@ -200,6 +207,10 @@ private struct RecordEntryCard: View {
         withAnimation(.spring(response: 0.28, dampingFraction: 0.84)) {
             onDone()
         }
+    }
+
+    private var deleteConfirmationTitle: String {
+        "是否要删除记录\(RecordPresentation.deletePromptTimestamp(record.timestamp))？"
     }
 }
 
@@ -768,6 +779,13 @@ private enum RecordPresentation {
         return formatter
     }()
 
+    private static let deletePromptFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd HH:mm"
+        return formatter
+    }()
+
     static func monthTitle(_ date: Date) -> String {
         monthFormatter.string(from: date)
     }
@@ -817,6 +835,10 @@ private enum RecordPresentation {
 
     static func timeText(for date: Date) -> String {
         timeFormatter.string(from: date)
+    }
+
+    static func deletePromptTimestamp(_ date: Date) -> String {
+        deletePromptFormatter.string(from: date)
     }
 
     static func metricSummary(for record: Record) -> String {
