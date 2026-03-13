@@ -17,6 +17,8 @@ struct RecordsView: View {
     private let sectionSpacing: CGFloat = 32
     private let sectionHeaderSpacing: CGFloat = 24
     private let monthGroupSpacing: CGFloat = 24
+    private let contentHorizontalPadding: CGFloat = 10
+    private let bigTitleLeadingPadding: CGFloat = 8
     private let bigTitleFontSize: CGFloat = 34
     private let monthTitleFontSize: CGFloat = 25
 
@@ -46,7 +48,7 @@ struct RecordsView: View {
 
                     earlierSection(proxy: proxy)
                 }
-                .padding(.horizontal, 10)
+                .padding(.horizontal, contentHorizontalPadding)
                 .padding(.top, 24)
                 .padding(.bottom, 20)
             }
@@ -63,6 +65,7 @@ struct RecordsView: View {
         VStack(alignment: .leading, spacing: sectionHeaderSpacing) {
             Text(title)
                 .font(.system(size: bigTitleFontSize, weight: .bold, design: .rounded))
+                .padding(.leading, bigTitleLeadingPadding)
 
             if records.isEmpty {
                 EmptySectionCard(message: emptyText)
@@ -93,6 +96,7 @@ struct RecordsView: View {
         VStack(alignment: .leading, spacing: sectionHeaderSpacing) {
             Text("更久之前")
                 .font(.system(size: bigTitleFontSize, weight: .bold, design: .rounded))
+                .padding(.leading, bigTitleLeadingPadding)
 
             if groupedRecords.earlierMonths.isEmpty {
                 EmptySectionCard(message: "还没有更久之前的记录")
