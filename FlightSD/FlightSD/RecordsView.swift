@@ -408,22 +408,12 @@ private struct MetricEditorRow: View {
 private struct MetricDotStrip: View {
     let metrics: [MetricDot]
 
-    private var rows: [[MetricDot]] {
-        stride(from: 0, to: metrics.count, by: 4).map { start in
-            Array(metrics[start ..< min(start + 4, metrics.count)])
-        }
-    }
-
     var body: some View {
-        VStack(alignment: .trailing, spacing: 3) {
-            ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
-                HStack(spacing: 4) {
-                    ForEach(Array(row.enumerated()), id: \.offset) { _, metric in
-                        Circle()
-                            .fill(zoneColor(for: metric.zone, zoneCount: metric.zoneCount))
-                            .frame(width: 6, height: 6)
-                    }
-                }
+        HStack(spacing: 3) {
+            ForEach(Array(metrics.enumerated()), id: \.offset) { _, metric in
+                Circle()
+                    .fill(zoneColor(for: metric.zone, zoneCount: metric.zoneCount))
+                    .frame(width: 5.5, height: 5.5)
             }
         }
     }
