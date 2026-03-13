@@ -46,17 +46,17 @@ struct RecordsView: View {
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: sectionSpacing) {
                     groupedSection(
-                        title: "今天",
+                        title: "Today",
                         records: groupedRecords.today,
-                        emptyText: "今天还没有记录",
+                        emptyText: "Nothing yet",
                         proxy: proxy,
                         showsFilterButton: true
                     )
 
                     groupedSection(
-                        title: "过去一周",
+                        title: "This Week",
                         records: groupedRecords.pastWeek,
-                        emptyText: "过去一周还没有记录",
+                        emptyText: "Nothing yet",
                         proxy: proxy
                     )
 
@@ -139,7 +139,7 @@ struct RecordsView: View {
     @ViewBuilder
     private func earlierSection(proxy: ScrollViewProxy) -> some View {
         VStack(alignment: .leading, spacing: sectionHeaderSpacing) {
-            Text("更久之前")
+            Text("Earlier")
                 .font(.system(size: bigTitleFontSize, weight: .bold, design: .rounded))
                 .padding(.leading, bigTitleLeadingPadding)
 
