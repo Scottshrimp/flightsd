@@ -10,7 +10,12 @@ struct RecordsView: View {
 
     @State private var expandedRecordID: PersistentIdentifier?
     private let scrollAnchor = UnitPoint(x: 0.5, y: -0.03)
-    private let recordListSpacing: CGFloat = 12
+    private let recordListSpacing: CGFloat = 14
+    private let sectionSpacing: CGFloat = 32
+    private let sectionHeaderSpacing: CGFloat = 18
+    private let monthGroupSpacing: CGFloat = 24
+    private let bigTitleFontSize: CGFloat = 36
+    private let monthTitleFontSize: CGFloat = 33
 
     private var groupedRecords: RecordGroups {
         RecordGroups(records: records, calendar: .current)
@@ -21,7 +26,7 @@ struct RecordsView: View {
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: 28) {
+                LazyVStack(alignment: .leading, spacing: sectionSpacing) {
                     groupedSection(
                         title: "今天",
                         records: groupedRecords.today,
@@ -52,9 +57,9 @@ struct RecordsView: View {
 
     @ViewBuilder
     private func groupedSection(title: String, records: [Record], emptyText: String, proxy: ScrollViewProxy) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: sectionHeaderSpacing) {
             Text(title)
-                .font(.system(.title, design: .rounded).weight(.bold))
+                .font(.system(size: bigTitleFontSize, weight: .bold, design: .rounded))
 
             if records.isEmpty {
                 EmptySectionCard(message: emptyText)
@@ -82,18 +87,18 @@ struct RecordsView: View {
 
     @ViewBuilder
     private func earlierSection(proxy: ScrollViewProxy) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: sectionHeaderSpacing) {
             Text("更久之前")
-                .font(.system(.title, design: .rounded).weight(.bold))
+                .font(.system(size: bigTitleFontSize, weight: .bold, design: .rounded))
 
             if groupedRecords.earlierMonths.isEmpty {
                 EmptySectionCard(message: "还没有更久之前的记录")
             } else {
-                VStack(alignment: .leading, spacing: 20) {
+                VStack(alignment: .leading, spacing: monthGroupSpacing) {
                     ForEach(groupedRecords.earlierMonths) { monthGroup in
-                        VStack(alignment: .leading, spacing: 12) {
+                        VStack(alignment: .leading, spacing: 14) {
                             Text(RecordPresentation.monthTitle(monthGroup.monthStart))
-                                .font(.title3.weight(.semibold))
+                                .font(.system(size: monthTitleFontSize, weight: .semibold, design: .rounded))
                                 .foregroundStyle(.secondary)
 
                             VStack(spacing: recordListSpacing) {
