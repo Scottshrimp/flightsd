@@ -656,7 +656,7 @@ struct FieldRow<Content: View>: View {
             }
             .buttonStyle(.plain)
 
-            FieldDisclosureContainer(isExpanded: isExpanded) {
+            if isExpanded {
                 VStack(spacing: 0) {
                     Divider()
                         .padding(.horizontal, 18)
@@ -665,6 +665,8 @@ struct FieldRow<Content: View>: View {
                         .padding(.horizontal, 18)
                         .padding(.vertical, 18)
                 }
+                .clipped()
+                .transition(.newRecordVerticalReveal)
             }
         }
         .background {
@@ -680,38 +682,27 @@ struct FieldRow<Content: View>: View {
     }
 }
 
-private struct FieldDisclosureContainer<Content: View>: View {
-    let isExpanded: Bool
-    @ViewBuilder let content: () -> Content
+private struct NewRecordVerticalRevealModifier: AnimatableModifier {
+    var progress: CGFloat
 
-    @State private var contentHeight: CGFloat = 0
+    var animatableData: CGFloat {
+        get { progress }
+        set { progress = newValue }
+    }
 
-    var body: some View {
-        VStack(spacing: 0) {
-            content()
-        }
-        .background {
-            GeometryReader { proxy in
-                Color.clear
-                    .preference(key: FieldDisclosureHeightKey.self, value: proxy.size.height)
-            }
-        }
-        .onPreferenceChange(FieldDisclosureHeightKey.self) { height in
-            contentHeight = height
-        }
-        .frame(height: isExpanded ? contentHeight : 0, alignment: .top)
-        .clipped()
-        .opacity(isExpanded ? 1 : 0)
-        .allowsHitTesting(isExpanded)
-        .accessibilityHidden(!isExpanded)
+    func body(content: Content) -> some View {
+        content
+            .scaleEffect(x: 1, y: max(progress, 0.001), anchor: .top)
+            .opacity(progress)
     }
 }
 
-private struct FieldDisclosureHeightKey: PreferenceKey {
-    static var defaultValue: CGFloat = 0
-
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = nextValue()
+private extension AnyTransition {
+    static var newRecordVerticalReveal: AnyTransition {
+        .modifier(
+            active: NewRecordVerticalRevealModifier(progress: 0),
+            identity: NewRecordVerticalRevealModifier(progress: 1)
+        )
     }
 }
 

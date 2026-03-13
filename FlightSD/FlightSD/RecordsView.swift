@@ -137,7 +137,7 @@ private struct RecordEntryCard: View {
             }
             .buttonStyle(.plain)
 
-            RecordDisclosureContainer(isExpanded: isExpanded) {
+            if isExpanded {
                 VStack(spacing: 0) {
                     Divider()
                         .padding(.horizontal, 18)
@@ -146,6 +146,8 @@ private struct RecordEntryCard: View {
                         saveChanges()
                     }
                 }
+                .clipped()
+                .transition(.recordsVerticalReveal)
             }
         }
         .background {
@@ -190,38 +192,27 @@ private struct RecordEntryCard: View {
     }
 }
 
-private struct RecordDisclosureContainer<Content: View>: View {
-    let isExpanded: Bool
-    @ViewBuilder let content: () -> Content
+private struct RecordsVerticalRevealModifier: AnimatableModifier {
+    var progress: CGFloat
 
-    @State private var contentHeight: CGFloat = 0
+    var animatableData: CGFloat {
+        get { progress }
+        set { progress = newValue }
+    }
 
-    var body: some View {
-        VStack(spacing: 0) {
-            content()
-        }
-        .background {
-            GeometryReader { proxy in
-                Color.clear
-                    .preference(key: RecordDisclosureHeightKey.self, value: proxy.size.height)
-            }
-        }
-        .onPreferenceChange(RecordDisclosureHeightKey.self) { height in
-            contentHeight = height
-        }
-        .frame(height: isExpanded ? contentHeight : 0, alignment: .top)
-        .clipped()
-        .opacity(isExpanded ? 1 : 0)
-        .allowsHitTesting(isExpanded)
-        .accessibilityHidden(!isExpanded)
+    func body(content: Content) -> some View {
+        content
+            .scaleEffect(x: 1, y: max(progress, 0.001), anchor: .top)
+            .opacity(progress)
     }
 }
 
-private struct RecordDisclosureHeightKey: PreferenceKey {
-    static var defaultValue: CGFloat = 0
-
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = nextValue()
+private extension AnyTransition {
+    static var recordsVerticalReveal: AnyTransition {
+        .modifier(
+            active: RecordsVerticalRevealModifier(progress: 0),
+            identity: RecordsVerticalRevealModifier(progress: 1)
+        )
     }
 }
 
