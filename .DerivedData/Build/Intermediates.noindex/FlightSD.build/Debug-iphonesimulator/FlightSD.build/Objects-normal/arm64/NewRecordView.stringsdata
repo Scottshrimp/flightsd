@@ -1,0 +1,152 @@
+{
+  "source": "/Users/scottnishiki/Desktop/flightsd/FlightSD/FlightSD/NewRecordView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "新记录",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 268
+        }
+      },
+      {
+        "comment": "",
+        "key": "精确密度",
+        "location": {
+          "startingColumn": 44,
+          "startingLine": 232
+        }
+      },
+      {
+        "comment": "",
+        "key": "质量",
+        "location": {
+          "startingColumn": 54,
+          "startingLine": 206
+        }
+      },
+      {
+        "comment": "",
+        "key": "克数",
+        "location": {
+          "startingColumn": 59,
+          "startingLine": 209
+        }
+      },
+      {
+        "comment": "",
+        "key": "密度",
+        "location": {
+          "startingColumn": 58,
+          "startingLine": 217
+        }
+      },
+      {
+        "comment": "",
+        "key": "密度",
+        "location": {
+          "startingColumn": 63,
+          "startingLine": 220
+        }
+      },
+      {
+        "comment": "",
+        "key": "估算体积",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 237
+        }
+      },
+      {
+        "comment": "",
+        "key": "取消",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 272
+        }
+      },
+      {
+        "comment": "",
+        "key": "记录这一次",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 282
+        }
+      },
+      {
+        "comment": "",
+        "key": "所有字段都已填完，可以直接保存。",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 285
+        }
+      },
+      {
+        "comment": "",
+        "key": "按顺序快速填写，也可以直接点开任意卡片补充。",
+        "location": {
+          "startingColumn": 83,
+          "startingLine": 285
+        }
+      },
+      {
+        "comment": "",
+        "key": "估算体积",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 291
+        }
+      },
+      {
+        "comment": "",
+        "key": "完成",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 322
+        }
+      },
+      {
+        "comment": "",
+        "key": "5 分钟后提醒",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 349
+        }
+      },
+      {
+        "comment": "",
+        "key": "15 分钟后提醒",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 350
+        }
+      },
+      {
+        "comment": "",
+        "key": "30 分钟后提醒",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 351
+        }
+      },
+      {
+        "comment": "",
+        "key": "1 小时后提醒",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 352
+        }
+      },
+      {
+        "comment": "",
+        "key": "2 小时后提醒",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 353
+        }
+      }
+    ]
+  },
+  "version": 1
+}

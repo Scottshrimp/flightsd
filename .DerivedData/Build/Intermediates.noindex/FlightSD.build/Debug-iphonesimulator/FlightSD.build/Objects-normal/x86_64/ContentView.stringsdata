@@ -1,0 +1,40 @@
+{
+  "source": "/Users/scottnishiki/Desktop/flightsd/FlightSD/FlightSD/ContentView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "记录",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 24
+        }
+      },
+      {
+        "comment": "",
+        "key": "趋势",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 30
+        }
+      },
+      {
+        "comment": "",
+        "key": "统计",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 36
+        }
+      },
+      {
+        "comment": "",
+        "key": "Profile",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 42
+        }
+      }
+    ]
+  },
+  "version": 1
+}

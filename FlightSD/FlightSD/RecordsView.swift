@@ -20,6 +20,8 @@ struct RecordsView: View {
         RecordGroups(records: records, calendar: .current)
     }
 
+    init() {}
+
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView {
@@ -345,13 +347,16 @@ private final class RecordsScrollBridge {
                 }
             }
 
-            guard let scrollView else { return }
+            guard let currentScrollView = self.scrollView else { return }
 
             let elapsed = min(max((CACurrentMediaTime() - startTime) / duration, 0), 1)
             let progress = 0.5 - (cos(.pi * elapsed) / 2)
             let adjustedOffsetY = startOffsetY + (targetOffsetY - startOffsetY) * progress
 
-            scrollView.setContentOffset(CGPoint(x: scrollView.contentOffset.x, y: adjustedOffsetY), animated: false)
+            currentScrollView.setContentOffset(
+                CGPoint(x: currentScrollView.contentOffset.x, y: adjustedOffsetY),
+                animated: false
+            )
         }
 
         step()

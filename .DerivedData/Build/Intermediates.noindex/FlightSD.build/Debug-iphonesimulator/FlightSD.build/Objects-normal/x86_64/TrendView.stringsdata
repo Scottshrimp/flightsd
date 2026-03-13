@@ -1,0 +1,16 @@
+{
+  "source": "/Users/scottnishiki/Desktop/flightsd/FlightSD/FlightSD/TrendView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Trend",
+        "location": {
+          "startingColumn": 14,
+          "startingLine": 5
+        }
+      }
+    ]
+  },
+  "version": 1
+}

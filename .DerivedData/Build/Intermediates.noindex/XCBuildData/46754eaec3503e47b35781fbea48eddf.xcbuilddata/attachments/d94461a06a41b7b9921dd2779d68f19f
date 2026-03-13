@@ -1,0 +1,109 @@
+{
+  "" : {
+    "diagnostics" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/FlightSD-primary.dia",
+    "emit-module-dependencies" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/FlightSD-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/FlightSD-primary-emit-module.dia",
+    "pch" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/FlightSD-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/FlightSD-primary.swiftdeps"
+  },
+  "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/DerivedSources/GeneratedAssetSymbols.swift" : {
+    "const-values" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/GeneratedAssetSymbols.swiftconstvalues",
+    "dependencies" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/GeneratedAssetSymbols.d",
+    "diagnostics" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/GeneratedAssetSymbols.dia",
+    "index-unit-output-path" : "/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/GeneratedAssetSymbols.o",
+    "llvm-bc" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/GeneratedAssetSymbols.bc",
+    "object" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/GeneratedAssetSymbols.o",
+    "swift-dependencies" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/GeneratedAssetSymbols.swiftdeps",
+    "swiftmodule" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/GeneratedAssetSymbols~partial.swiftmodule"
+  },
+  "/Users/scottnishiki/Desktop/flightsd/FlightSD/FlightSD/AppState.swift" : {
+    "const-values" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/AppState.swiftconstvalues",
+    "dependencies" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/AppState.d",
+    "diagnostics" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/AppState.dia",
+    "index-unit-output-path" : "/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/AppState.o",
+    "llvm-bc" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/AppState.bc",
+    "object" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/AppState.o",
+    "swift-dependencies" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/AppState.swiftdeps",
+    "swiftmodule" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/AppState~partial.swiftmodule"
+  },
+  "/Users/scottnishiki/Desktop/flightsd/FlightSD/FlightSD/ContentView.swift" : {
+    "const-values" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/ContentView.swiftconstvalues",
+    "dependencies" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/ContentView.d",
+    "diagnostics" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/ContentView.dia",
+    "index-unit-output-path" : "/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/ContentView.o",
+    "llvm-bc" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/ContentView.bc",
+    "object" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/ContentView.o",
+    "swift-dependencies" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/ContentView.swiftdeps",
+    "swiftmodule" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/ContentView~partial.swiftmodule"
+  },
+  "/Users/scottnishiki/Desktop/flightsd/FlightSD/FlightSD/FlightSDApp.swift" : {
+    "const-values" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/FlightSDApp.swiftconstvalues",
+    "dependencies" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/FlightSDApp.d",
+    "diagnostics" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/FlightSDApp.dia",
+    "index-unit-output-path" : "/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/FlightSDApp.o",
+    "llvm-bc" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/FlightSDApp.bc",
+    "object" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/FlightSDApp.o",
+    "swift-dependencies" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/FlightSDApp.swiftdeps",
+    "swiftmodule" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/FlightSDApp~partial.swiftmodule"
+  },
+  "/Users/scottnishiki/Desktop/flightsd/FlightSD/FlightSD/NewRecordView.swift" : {
+    "const-values" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/NewRecordView.swiftconstvalues",
+    "dependencies" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/NewRecordView.d",
+    "diagnostics" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/NewRecordView.dia",
+    "index-unit-output-path" : "/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/NewRecordView.o",
+    "llvm-bc" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/NewRecordView.bc",
+    "object" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/NewRecordView.o",
+    "swift-dependencies" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/NewRecordView.swiftdeps",
+    "swiftmodule" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/NewRecordView~partial.swiftmodule"
+  },
+  "/Users/scottnishiki/Desktop/flightsd/FlightSD/FlightSD/ProfileView.swift" : {
+    "const-values" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/ProfileView.swiftconstvalues",
+    "dependencies" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/ProfileView.d",
+    "diagnostics" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/ProfileView.dia",
+    "index-unit-output-path" : "/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/ProfileView.o",
+    "llvm-bc" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/ProfileView.bc",
+    "object" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/ProfileView.o",
+    "swift-dependencies" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/ProfileView.swiftdeps",
+    "swiftmodule" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/ProfileView~partial.swiftmodule"
+  },
+  "/Users/scottnishiki/Desktop/flightsd/FlightSD/FlightSD/Record.swift" : {
+    "const-values" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/Record.swiftconstvalues",
+    "dependencies" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/Record.d",
+    "diagnostics" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/Record.dia",
+    "index-unit-output-path" : "/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/Record.o",
+    "llvm-bc" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/Record.bc",
+    "object" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/Record.o",
+    "swift-dependencies" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/Record.swiftdeps",
+    "swiftmodule" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/Record~partial.swiftmodule"
+  },
+  "/Users/scottnishiki/Desktop/flightsd/FlightSD/FlightSD/RecordsView.swift" : {
+    "const-values" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/RecordsView.swiftconstvalues",
+    "dependencies" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/RecordsView.d",
+    "diagnostics" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/RecordsView.dia",
+    "index-unit-output-path" : "/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/RecordsView.o",
+    "llvm-bc" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/RecordsView.bc",
+    "object" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/RecordsView.o",
+    "swift-dependencies" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/RecordsView.swiftdeps",
+    "swiftmodule" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/RecordsView~partial.swiftmodule"
+  },
+  "/Users/scottnishiki/Desktop/flightsd/FlightSD/FlightSD/StatsView.swift" : {
+    "const-values" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/StatsView.swiftconstvalues",
+    "dependencies" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/StatsView.d",
+    "diagnostics" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/StatsView.dia",
+    "index-unit-output-path" : "/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/StatsView.o",
+    "llvm-bc" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/StatsView.bc",
+    "object" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/StatsView.o",
+    "swift-dependencies" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/StatsView.swiftdeps",
+    "swiftmodule" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/StatsView~partial.swiftmodule"
+  },
+  "/Users/scottnishiki/Desktop/flightsd/FlightSD/FlightSD/TrendView.swift" : {
+    "const-values" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/TrendView.swiftconstvalues",
+    "dependencies" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/TrendView.d",
+    "diagnostics" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/TrendView.dia",
+    "index-unit-output-path" : "/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/TrendView.o",
+    "llvm-bc" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/TrendView.bc",
+    "object" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/TrendView.o",
+    "swift-dependencies" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/TrendView.swiftdeps",
+    "swiftmodule" : "/Users/scottnishiki/Desktop/flightsd/.DerivedData/Build/Intermediates.noindex/FlightSD.build/Debug-iphonesimulator/FlightSD.build/Objects-normal/x86_64/TrendView~partial.swiftmodule"
+  }
+}

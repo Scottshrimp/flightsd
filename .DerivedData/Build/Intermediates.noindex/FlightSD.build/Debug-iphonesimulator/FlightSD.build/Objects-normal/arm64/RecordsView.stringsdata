@@ -1,0 +1,96 @@
+{
+  "source": "/Users/scottnishiki/Desktop/flightsd/FlightSD/FlightSD/RecordsView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "更久之前",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 112
+        }
+      },
+      {
+        "comment": "",
+        "key": "是否要删除记录",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 477
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 478
+        }
+      },
+      {
+        "comment": "",
+        "key": "Confirm",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 479
+        }
+      },
+      {
+        "comment": "",
+        "key": "记录时间",
+        "location": {
+          "startingColumn": 25,
+          "startingLine": 632
+        }
+      },
+      {
+        "comment": "",
+        "key": "估算体积 %@",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 735
+        }
+      },
+      {
+        "comment": "",
+        "key": "质量或密度格式无效，暂时无法保存。",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 740
+        }
+      },
+      {
+        "comment": "",
+        "key": "克数",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 725
+        }
+      },
+      {
+        "comment": "",
+        "key": "精确密度",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 728
+        }
+      },
+      {
+        "comment": "",
+        "key": "密度",
+        "location": {
+          "startingColumn": 35,
+          "startingLine": 731
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add Record",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 868
+        }
+      }
+    ]
+  },
+  "version": 1
+}
