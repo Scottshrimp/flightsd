@@ -144,6 +144,8 @@ private struct RecordEntryCard: View {
 
                     RecordInlineEditor(draft: $draft) {
                         saveChanges()
+                    } onDelete: {
+                        deleteRecord()
                     }
                 }
                 .clipped()
@@ -184,6 +186,15 @@ private struct RecordEntryCard: View {
         record.mass = draft.massValue
         record.preciseDensity = draft.preciseDensityValue
 
+        try? modelContext.save()
+
+        withAnimation(.spring(response: 0.28, dampingFraction: 0.84)) {
+            onDone()
+        }
+    }
+
+    private func deleteRecord() {
+        modelContext.delete(record)
         try? modelContext.save()
 
         withAnimation(.spring(response: 0.28, dampingFraction: 0.84)) {
@@ -278,16 +289,27 @@ private struct TimestampLine: View {
 private struct RecordInlineEditor: View {
     @Binding var draft: RecordDraft
     let onDone: () -> Void
+    let onDelete: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             EditorBlock(title: "记录时间") {
-                DatePicker(
-                    "记录时间",
-                    selection: $draft.timestamp,
-                    displayedComponents: [.date, .hourAndMinute]
-                )
-                .labelsHidden()
+                HStack(alignment: .center, spacing: 12) {
+                    DatePicker(
+                        "记录时间",
+                        selection: $draft.timestamp,
+                        displayedComponents: [.date, .hourAndMinute]
+                    )
+                    .labelsHidden()
+
+                    Spacer(minLength: 12)
+
+                    Button("Done") {
+                        onDone()
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(!draft.canSave)
+                }
             }
 
             EditorBlock(title: "次元") {
@@ -392,6 +414,12 @@ private struct RecordInlineEditor: View {
             }
 
             HStack {
+                Button("Delete") {
+                    onDelete()
+                }
+                .buttonStyle(.bordered)
+                .tint(.red)
+
                 Spacer()
 
                 Button("Done") {
