@@ -428,45 +428,53 @@ private struct AddRecordBar: View {
     }
 
     var body: some View {
-        Button {
-            action()
-        } label: {
-            HStack {
-                Text("Add Record")
-                    .font(.headline)
-                    .foregroundStyle(.white)
+        GeometryReader { proxy in
+            VStack(spacing: 0) {
+                Spacer(minLength: 0)
 
-                Spacer()
+                Button {
+                    action()
+                } label: {
+                    HStack {
+                        Text("Add Record")
+                            .font(.headline)
+                            .foregroundStyle(.white)
 
-                Image(systemName: "arrow.up.left")
-                    .font(.headline.weight(.semibold))
-                    .foregroundStyle(.white)
-            }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 11)
-            .frame(maxWidth: .infinity)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .background {
-            ZStack {
-                Rectangle()
-                    .fill(.ultraThinMaterial)
+                        Spacer()
 
-                GeometryReader { proxy in
+                        Image(systemName: "arrow.up.left")
+                            .font(.headline.weight(.semibold))
+                            .foregroundStyle(.white)
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 11)
+                    .frame(maxWidth: .infinity)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .frame(width: proxy.size.width * 0.88)
+                .background {
+                    ZStack {
+                        Rectangle()
+                            .fill(.ultraThinMaterial)
+
+                        GeometryReader { buttonProxy in
+                            Rectangle()
+                                .fill(diagonalGradient(in: buttonProxy.size))
+                                .saturation(1.3)
+                                .brightness(-0.05)
+                                .opacity(0.60)
+                        }
+                    }
+                }
+                .overlay(alignment: .top) {
                     Rectangle()
-                        .fill(diagonalGradient(in: proxy.size))
-                        .saturation(1.3)
-                        .brightness(-0.05)
-                        .opacity(0.60)
+                        .fill(Color.white.opacity(0.18))
+                        .frame(height: 1)
                 }
             }
         }
-        .overlay(alignment: .top) {
-            Rectangle()
-                .fill(Color.white.opacity(0.18))
-                .frame(height: 1)
-        }
+        .frame(height: 39)
         .ignoresSafeArea(edges: .horizontal)
     }
 }
