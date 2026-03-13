@@ -578,23 +578,35 @@ struct CustomSliderField: View {
 
             GeometryReader { geometry in
                 let trackWidth = geometry.size.width
-                let thumbX = value * trackWidth
+                let filledWidth = max(0, min(trackWidth, value * trackWidth))
 
                 ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 3)
-                        .fill(Color.secondary.opacity(0.18))
-                        .frame(height: 6)
+                    RoundedRectangle(cornerRadius: 11, style: .continuous)
+                        .fill(Color.secondary.opacity(0.14))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 11, style: .continuous)
+                                .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
+                        }
+                        .frame(height: 22)
 
-                    RoundedRectangle(cornerRadius: 3)
-                        .fill(accentColor)
-                        .frame(width: thumbX, height: 6)
-
-                    Circle()
-                        .fill(accentColor)
-                        .frame(width: isDragging ? 28 : 22, height: isDragging ? 28 : 22)
-                        .shadow(color: accentColor.opacity(0.35), radius: isDragging ? 10 : 4, y: 2)
-                        .offset(x: thumbX - (isDragging ? 14 : 11))
-                        .animation(.spring(response: 0.22, dampingFraction: 0.7), value: isDragging)
+                    RoundedRectangle(cornerRadius: 11, style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    accentColor.opacity(isDragging ? 0.92 : 0.82),
+                                    accentColor
+                                ],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .frame(width: filledWidth, height: 22)
+                        .overlay(alignment: .topLeading) {
+                            RoundedRectangle(cornerRadius: 11, style: .continuous)
+                                .fill(Color.white.opacity(isDragging ? 0.22 : 0.14))
+                                .frame(width: filledWidth, height: 10)
+                        }
+                        .animation(.easeInOut(duration: 0.12), value: isDragging)
                 }
                 .frame(height: 36)
                 .contentShape(Rectangle())
