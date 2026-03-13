@@ -12,6 +12,9 @@ struct RecordsView: View {
     @Query(sort: \Record.timestamp, order: .reverse) private var records: [Record]
 
     @State private var expandedRecordID: PersistentIdentifier?
+    @State private var appliedFilter = RecordsFilter()
+    @State private var draftFilter = RecordsFilter()
+    @State private var isShowingFilterSheet = false
     private let scrollAnchor = UnitPoint(x: 0.5, y: -0.03)
     private let recordListSpacing: CGFloat = 14
     private let sectionSpacing: CGFloat = 32
@@ -23,8 +26,12 @@ struct RecordsView: View {
     private let bigTitleFontSize: CGFloat = 34
     private let monthTitleFontSize: CGFloat = 25
 
+    private var filteredRecords: [Record] {
+        records.filter { appliedFilter.matches($0) }
+    }
+
     private var groupedRecords: RecordGroups {
-        RecordGroups(records: records, calendar: .current)
+        RecordGroups(records: filteredRecords, calendar: .current)
     }
 
     init() {}
@@ -37,7 +44,8 @@ struct RecordsView: View {
                         title: "今天",
                         records: groupedRecords.today,
                         emptyText: "今天还没有记录",
-                        proxy: proxy
+                        proxy: proxy,
+                        showsFilterButton: true
                     )
 
                     groupedSection(
@@ -58,15 +66,45 @@ struct RecordsView: View {
                     appState.showNewRecord = true
                 }
             }
+            .sheet(isPresented: $isShowingFilterSheet) {
+                RecordsFilterSheet(
+                    draftFilter: $draftFilter,
+                    onApply: applyFilter,
+                    onClear: clearFilter
+                )
+            }
         }
     }
 
     @ViewBuilder
-    private func groupedSection(title: String, records: [Record], emptyText: String, proxy: ScrollViewProxy) -> some View {
+    private func groupedSection(
+        title: String,
+        records: [Record],
+        emptyText: String,
+        proxy: ScrollViewProxy,
+        showsFilterButton: Bool = false
+    ) -> some View {
         VStack(alignment: .leading, spacing: sectionHeaderSpacing) {
-            Text(title)
-                .font(.system(size: bigTitleFontSize, weight: .bold, design: .rounded))
-                .padding(.leading, bigTitleLeadingPadding)
+            HStack(alignment: .center, spacing: 12) {
+                Text(title)
+                    .font(.system(size: bigTitleFontSize, weight: .bold, design: .rounded))
+                    .padding(.leading, bigTitleLeadingPadding)
+
+                Spacer(minLength: 12)
+
+                if showsFilterButton {
+                    Button {
+                        draftFilter = appliedFilter
+                        isShowingFilterSheet = true
+                    } label: {
+                        Image(systemName: "line.3.horizontal.decrease.circle.fill")
+                            .font(.system(size: 22, weight: .semibold))
+                            .foregroundStyle(appliedFilter.isActive ? Color.accentColor : Color.secondary)
+                            .frame(width: 30, height: 30)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
 
             if records.isEmpty {
                 EmptySectionCard(message: emptyText)
@@ -190,13 +228,13 @@ struct RecordsView: View {
     }
 
     private func nextRecordID(after record: Record) -> PersistentIdentifier? {
-        guard let currentIndex = records.firstIndex(where: { $0.persistentModelID == record.persistentModelID }) else {
+        guard let currentIndex = filteredRecords.firstIndex(where: { $0.persistentModelID == record.persistentModelID }) else {
             return nil
         }
 
-        let nextIndex = records.index(after: currentIndex)
-        guard records.indices.contains(nextIndex) else { return nil }
-        return records[nextIndex].persistentModelID
+        let nextIndex = filteredRecords.index(after: currentIndex)
+        guard filteredRecords.indices.contains(nextIndex) else { return nil }
+        return filteredRecords[nextIndex].persistentModelID
     }
 
     private func scrollToRecord(_ id: PersistentIdentifier, using proxy: ScrollViewProxy, delay: Double) {
@@ -205,6 +243,207 @@ struct RecordsView: View {
                 proxy.scrollTo(id, anchor: scrollAnchor)
             }
         }
+    }
+
+    private func applyFilter() {
+        appliedFilter = draftFilter
+        collapseExpandedRecordIfHidden()
+        isShowingFilterSheet = false
+    }
+
+    private func clearFilter() {
+        appliedFilter = RecordsFilter()
+        draftFilter = RecordsFilter()
+        collapseExpandedRecordIfHidden()
+        isShowingFilterSheet = false
+    }
+
+    private func collapseExpandedRecordIfHidden() {
+        guard let expandedRecordID else { return }
+        let isStillVisible = filteredRecords.contains { $0.persistentModelID == expandedRecordID }
+        if !isStillVisible {
+            self.expandedRecordID = nil
+        }
+    }
+}
+
+private struct RecordsFilter: Equatable {
+    var dimension: Dimension? = nil
+    var mediaType: MediaType? = nil
+
+    var isActive: Bool {
+        dimension != nil || mediaType != nil
+    }
+
+    func matches(_ record: Record) -> Bool {
+        if let dimension, record.dimension != dimension {
+            return false
+        }
+
+        if let mediaType, record.mediaType != mediaType {
+            return false
+        }
+
+        return true
+    }
+}
+
+private struct RecordsFilterSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @Binding var draftFilter: RecordsFilter
+    let onApply: () -> Void
+    let onClear: () -> Void
+
+    private var availableMediaTypes: [MediaType] {
+        switch draftFilter.dimension {
+        case .threeDimension:
+            return [.img, .vid]
+        case .twoDimension, nil:
+            return [.img, .vid, .txt, .aud]
+        }
+    }
+
+    private let filterGridColumns = [
+        GridItem(.flexible(), spacing: 12),
+        GridItem(.flexible(), spacing: 12),
+        GridItem(.flexible(), spacing: 12)
+    ]
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    FilterSectionCard(title: "次元") {
+                        LazyVGrid(columns: filterGridColumns, spacing: 12) {
+                            filterButton(title: "全部", isSelected: draftFilter.dimension == nil) {
+                                draftFilter.dimension = nil
+                            }
+
+                            ForEach([Dimension.twoDimension, .threeDimension], id: \.self) { dimension in
+                                filterButton(
+                                    title: RecordPresentation.dimensionLabel(dimension),
+                                    isSelected: draftFilter.dimension == dimension
+                                ) {
+                                    draftFilter.dimension = dimension
+                                    if dimension == .threeDimension,
+                                       let mediaType = draftFilter.mediaType,
+                                       !availableMediaTypes.contains(mediaType) {
+                                        draftFilter.mediaType = nil
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    FilterSectionCard(title: "媒体类型") {
+                        LazyVGrid(columns: filterGridColumns, spacing: 12) {
+                            filterButton(title: "全部", isSelected: draftFilter.mediaType == nil) {
+                                draftFilter.mediaType = nil
+                            }
+
+                            ForEach(availableMediaTypes, id: \.self) { mediaType in
+                                filterButton(
+                                    title: RecordPresentation.mediaTypeLabel(mediaType),
+                                    isSelected: draftFilter.mediaType == mediaType
+                                ) {
+                                    draftFilter.mediaType = mediaType
+                                }
+                            }
+                        }
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 20)
+                .padding(.bottom, 24)
+            }
+            .navigationTitle("筛选记录")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Close") {
+                        dismiss()
+                    }
+                }
+            }
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                VStack(spacing: 10) {
+                    Button {
+                        onApply()
+                    } label: {
+                        Text("Apply Filter")
+                            .font(.headline.weight(.semibold))
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 52)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                    .fill(Color.accentColor)
+                            )
+                    }
+                    .buttonStyle(.plain)
+
+                    Button {
+                        onClear()
+                    } label: {
+                        Text("Clear Filter")
+                            .font(.headline.weight(.semibold))
+                            .foregroundStyle(.primary)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 52)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                    .fill(Color.primary.opacity(0.06))
+                            )
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 12)
+                .padding(.bottom, 12)
+                .frame(maxWidth: .infinity)
+                .background {
+                    Rectangle()
+                        .fill(.ultraThinMaterial)
+                        .ignoresSafeArea(edges: [.horizontal, .bottom])
+                }
+                .overlay(alignment: .top) {
+                    Rectangle()
+                        .fill(Color.primary.opacity(0.08))
+                        .frame(height: 1)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func filterButton(title: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
+        Button(title, action: action)
+            .buttonStyle(SelectionButtonStyle(isSelected: isSelected))
+    }
+}
+
+private struct FilterSectionCard<Content: View>: View {
+    let title: String
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(title)
+                .font(.subheadline.weight(.semibold))
+
+            content()
+        }
+        .padding(.horizontal, 18)
+        .padding(.vertical, 18)
+        .background {
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(.thinMaterial)
+        }
+        .overlay {
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
+        }
+        .shadow(color: .black.opacity(0.04), radius: 12, y: 6)
     }
 }
 
