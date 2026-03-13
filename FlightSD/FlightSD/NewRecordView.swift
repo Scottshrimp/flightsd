@@ -44,8 +44,8 @@ struct NewRecordView: View {
             time != nil,
             sound != nil,
             atm != nil,
-            postnut != nil,
             horny != nil,
+            postnut != nil,
             !mass.isEmpty
         ]
     }
@@ -186,19 +186,19 @@ struct NewRecordView: View {
 
                             sliderRow(
                                 index: 8,
-                                title: "Postnut",
-                                value: Binding(get: { postnut ?? 0.5 }, set: { postnut = $0 }),
-                                filled: postnut,
-                                labels: postnutLabels
+                                title: "Horny Level",
+                                value: Binding(get: { horny ?? 0.5 }, set: { horny = $0 }),
+                                filled: horny,
+                                labels: hornyLabels
                             )
                             .id(fieldScrollID(8))
 
                             sliderRow(
                                 index: 9,
-                                title: "Horny Level",
-                                value: Binding(get: { horny ?? 0.5 }, set: { horny = $0 }),
-                                filled: horny,
-                                labels: hornyLabels
+                                title: "Postnut",
+                                value: Binding(get: { postnut ?? 0.5 }, set: { postnut = $0 }),
+                                filled: postnut,
+                                labels: postnutLabels
                             )
                             .id(fieldScrollID(9))
 

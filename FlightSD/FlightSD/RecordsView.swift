@@ -769,16 +769,16 @@ private struct RecordInlineEditor: View {
             )
 
             MetricEditorRow(
-                title: "Postnut",
-                value: $draft.postnut,
-                labels: RecordPresentation.postnutLabels,
+                title: "Horny Level",
+                value: $draft.horny,
+                labels: RecordPresentation.hornyLabels,
                 isSliderDragging: $isSliderDragging
             )
 
             MetricEditorRow(
-                title: "Horny Level",
-                value: $draft.horny,
-                labels: RecordPresentation.hornyLabels,
+                title: "Postnut",
+                value: $draft.postnut,
+                labels: RecordPresentation.postnutLabels,
                 isSliderDragging: $isSliderDragging
             )
 
