@@ -154,6 +154,7 @@ struct RecordsView: View {
                             Text(RecordPresentation.monthTitle(monthGroup.monthStart))
                                 .font(.system(size: monthTitleFontSize, weight: .semibold, design: .rounded))
                                 .foregroundStyle(.secondary)
+                                .padding(.leading, bigTitleLeadingPadding)
 
                             VStack(spacing: recordListSpacing) {
                                 ForEach(monthGroup.records) { record in
