@@ -405,8 +405,8 @@ private struct AddRecordBar: View {
     let action: () -> Void
 
     private var gradientColors: [Color] {
-        let darkerBlue = Color(red: 0, green: 114.0 / 255.0, blue: 0.98)
-        let lighterBlue = Color(red: 24.0 / 255.0, green: 134.0 / 255.0, blue: 1)
+        let darkerBlue = Color(red: 0, green: 111.0 / 255.0, blue: 248.0 / 255.0)
+        let lighterBlue = Color(red: 32.0 / 255.0, green: 138.0 / 255.0, blue: 1)
 
         if colorScheme == .dark {
             return [lighterBlue, darkerBlue]
@@ -449,6 +449,7 @@ private struct AddRecordBar: View {
                             endPoint: .trailing
                         )
                     )
+                    .rotationEffect(.degrees(45))
                     .saturation(1.3)
                     .brightness(-0.05)
                     .opacity(0.60)
