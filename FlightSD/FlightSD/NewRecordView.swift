@@ -55,12 +55,19 @@ struct NewRecordView: View {
     }
 
     private var availableMediaTypes: [MediaType] {
-        dimension == .twoDimension ? [.img, .vid, .txt, .aud] : [.img, .vid]
+        switch dimension {
+        case .twoDimension:
+            return [.img, .vid, .txt, .aud]
+        case .threeDimension:
+            return [.img, .vid]
+        case nil:
+            return [.img, .vid, .txt, .aud]
+        }
     }
 
     private var estimatedVolumeText: String {
-        guard let massValue = Double(mass) else { return "--" }
-        let density = usePreciseDensity ? (Double(preciseDensityInput) ?? 1.035) : 1.035
+        guard let massValue = parsedOptionalNumber(from: mass) else { return "--" }
+        let density = usePreciseDensity ? (parsedOptionalNumber(from: preciseDensityInput) ?? 1.035) : 1.035
         let estimatedVolume = massValue / density
         return "\(newRecordFixedNumberText(estimatedVolume, fractionDigits: 2)) mL"
     }
@@ -296,11 +303,11 @@ struct NewRecordView: View {
         .padding(.horizontal, 18)
         .padding(.vertical, 18)
         .background {
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .fill(.thinMaterial)
         }
         .overlay {
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
         }
         .shadow(color: .black.opacity(0.04), radius: 12, y: 6)
@@ -463,18 +470,18 @@ struct NewRecordView: View {
 
     private func saveRecord() {
         let record = Record(
-            dimension: dimension ?? .twoDimension,
-            mediaType: mediaType ?? .img,
-            typeAge: typeAge ?? 0.5,
-            typePosition: typePosition ?? 0.5,
-            typeExistence: typeExistence ?? 0.5,
-            time: time ?? 0.5,
-            sound: sound ?? 0.0,
-            atm: atm ?? 0.5,
-            postnut: postnut ?? 0.5,
-            horny: horny ?? 0.5,
-            mass: Double(mass) ?? 0.0,
-            preciseDensity: usePreciseDensity ? Double(preciseDensityInput) : nil
+            dimension: dimension,
+            mediaType: mediaType,
+            typeAge: typeAge,
+            typePosition: typePosition,
+            typeExistence: typeExistence,
+            time: time,
+            sound: sound,
+            atm: atm,
+            postnut: postnut,
+            horny: horny,
+            mass: parsedOptionalNumber(from: mass),
+            preciseDensity: usePreciseDensity ? parsedOptionalNumber(from: preciseDensityInput) : nil
         )
 
         modelContext.insert(record)
@@ -489,6 +496,12 @@ struct NewRecordView: View {
         guard !hasSeenNewRecordIntroCard else { return }
         showIntroCard = true
         hasSeenNewRecordIntroCard = true
+    }
+
+    private func parsedOptionalNumber(from text: String) -> Double? {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        return Double(trimmed)
     }
 
     private func fieldScrollID(_ index: Int) -> String {
@@ -652,11 +665,11 @@ struct FieldRow<Content: View>: View {
             }
         }
         .background {
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .fill(.thinMaterial)
         }
         .overlay {
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
         }
         .shadow(color: .black.opacity(0.04), radius: 12, y: 6)

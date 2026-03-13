@@ -175,7 +175,7 @@ private struct RecordEntryCard: View {
         record.atm = draft.atm
         record.postnut = draft.postnut
         record.horny = draft.horny
-        record.mass = draft.massValue ?? record.mass
+        record.mass = draft.massValue
         record.preciseDensity = draft.preciseDensityValue
 
         try? modelContext.save()
@@ -260,8 +260,10 @@ private struct RecordInlineEditor: View {
                     ForEach([Dimension.twoDimension, Dimension.threeDimension], id: \.self) { dimension in
                         Button(RecordPresentation.dimensionLabel(dimension)) {
                             draft.dimension = dimension
-                            if dimension == .threeDimension && !draft.availableMediaTypes.contains(draft.mediaType) {
-                                draft.mediaType = .img
+                            if dimension == .threeDimension,
+                               let mediaType = draft.mediaType,
+                               !draft.availableMediaTypes.contains(mediaType) {
+                                draft.mediaType = nil
                             }
                         }
                         .buttonStyle(SelectionButtonStyle(isSelected: draft.dimension == dimension))
@@ -371,13 +373,24 @@ private struct RecordInlineEditor: View {
 
 private struct MetricEditorRow: View {
     let title: String
-    @Binding var value: Double
+    @Binding var value: Double?
     let labels: [String]
     var range: ClosedRange<Double> = 0 ... 1
     var normalize: (Double) -> Double = { $0 }
 
-    private var currentZone: Int {
-        zoneIndex(for: normalize(value), zoneCount: labels.count)
+    private var midpointValue: Double {
+        (range.lowerBound + range.upperBound) / 2
+    }
+
+    private var currentZone: Int? {
+        value.map { zoneIndex(for: normalize($0), zoneCount: labels.count) }
+    }
+
+    private var sliderBinding: Binding<Double> {
+        Binding(
+            get: { value ?? midpointValue },
+            set: { value = $0 }
+        )
     }
 
     var body: some View {
@@ -388,13 +401,13 @@ private struct MetricEditorRow: View {
 
                 Spacer()
 
-                Text(labels[currentZone])
+                Text(currentZone.map { labels[$0] } ?? "未填写")
                     .font(.caption.weight(.semibold))
-                    .foregroundStyle(zoneColor(for: currentZone, zoneCount: labels.count))
+                    .foregroundStyle(currentZone.map { zoneColor(for: $0, zoneCount: labels.count) } ?? Color.secondary)
             }
 
-            Slider(value: $value, in: range)
-                .tint(zoneColor(for: currentZone, zoneCount: labels.count))
+            Slider(value: sliderBinding, in: range)
+                .tint(currentZone.map { zoneColor(for: $0, zoneCount: labels.count) } ?? Color.secondary.opacity(0.55))
 
             HStack(spacing: 0) {
                 ForEach(labels.indices, id: \.self) { index in
@@ -415,10 +428,17 @@ private struct MetricDotStrip: View {
         HStack(spacing: 4) {
             ForEach(Array(metrics.enumerated()), id: \.offset) { _, metric in
                 Circle()
-                    .fill(zoneColor(for: metric.zone, zoneCount: metric.zoneCount))
+                    .fill(dotColor(for: metric))
                     .frame(width: 6.5, height: 6.5)
             }
         }
+    }
+
+    private func dotColor(for metric: MetricDot) -> Color {
+        guard let zone = metric.zone else {
+            return Color.secondary.opacity(0.4)
+        }
+        return zoneColor(for: zone, zoneCount: metric.zoneCount)
     }
 }
 
@@ -570,22 +590,22 @@ private struct MonthGroup: Identifiable {
 }
 
 private struct MetricDot {
-    let zone: Int
+    let zone: Int?
     let zoneCount: Int
 }
 
 private struct RecordDraft {
     var timestamp: Date
-    var dimension: Dimension
-    var mediaType: MediaType
-    var typeAge: Double
-    var typePosition: Double
-    var typeExistence: Double
-    var time: Double
-    var sound: Double
-    var atm: Double
-    var postnut: Double
-    var horny: Double
+    var dimension: Dimension?
+    var mediaType: MediaType?
+    var typeAge: Double?
+    var typePosition: Double?
+    var typeExistence: Double?
+    var time: Double?
+    var sound: Double?
+    var atm: Double?
+    var postnut: Double?
+    var horny: Double?
     var massText: String
     var usePreciseDensity: Bool
     var preciseDensityText: String
@@ -602,7 +622,9 @@ private struct RecordDraft {
         atm = record.atm
         postnut = record.postnut
         horny = record.horny
-        massText = RecordPresentation.numberText(record.mass, maxFractionDigits: 2)
+        massText = record.mass.map {
+            RecordPresentation.numberText($0, maxFractionDigits: 2)
+        } ?? ""
         usePreciseDensity = record.preciseDensity != nil
         preciseDensityText = record.preciseDensity.map {
             RecordPresentation.numberText($0, maxFractionDigits: 3)
@@ -610,20 +632,27 @@ private struct RecordDraft {
     }
 
     var availableMediaTypes: [MediaType] {
-        dimension == .twoDimension ? [.img, .vid, .txt, .aud] : [.img, .vid]
+        switch dimension {
+        case .twoDimension:
+            return [.img, .vid, .txt, .aud]
+        case .threeDimension:
+            return [.img, .vid]
+        case nil:
+            return [.img, .vid, .txt, .aud]
+        }
     }
 
     var massValue: Double? {
-        Double(massText)
+        parsedOptionalNumber(from: massText)
     }
 
     var preciseDensityValue: Double? {
         guard usePreciseDensity else { return nil }
-        return Double(preciseDensityText)
+        return parsedOptionalNumber(from: preciseDensityText)
     }
 
     var canSave: Bool {
-        massValue != nil && (!usePreciseDensity || preciseDensityValue != nil)
+        hasValidNumber(massText) && (!usePreciseDensity || hasValidNumber(preciseDensityText))
     }
 
     var estimatedVolumeText: String {
@@ -631,6 +660,17 @@ private struct RecordDraft {
         let density = preciseDensityValue ?? 1.035
         let estVol = massValue / density
         return "\(RecordPresentation.fixedNumberText(estVol, fractionDigits: 2)) mL"
+    }
+
+    private func parsedOptionalNumber(from text: String) -> Double? {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        return Double(trimmed)
+    }
+
+    private func hasValidNumber(_ text: String) -> Bool {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty || Double(trimmed) != nil
     }
 }
 
@@ -692,7 +732,16 @@ private enum RecordPresentation {
     }
 
     static func mediaCategory(for record: Record) -> String {
-        dimensionLabel(record.dimension) + mediaTypeLabel(record.mediaType)
+        switch (record.dimension, record.mediaType) {
+        case let (.some(dimension), .some(mediaType)):
+            return dimensionLabel(dimension) + mediaTypeLabel(mediaType)
+        case let (.some(dimension), nil):
+            return dimensionLabel(dimension)
+        case let (nil, .some(mediaType)):
+            return mediaTypeLabel(mediaType)
+        case (nil, nil):
+            return "未分类"
+        }
     }
 
     static func dateText(for date: Date) -> String? {
@@ -708,21 +757,21 @@ private enum RecordPresentation {
     }
 
     static func metricSummary(for record: Record) -> String {
-        let mass = numberText(record.mass, maxFractionDigits: 1)
-        let estVol = fixedNumberText(record.estVol, fractionDigits: 2)
+        let mass = record.mass.map { numberText($0, maxFractionDigits: 1) } ?? "--"
+        let estVol = record.estVol.map { fixedNumberText($0, fractionDigits: 2) } ?? "--"
         return "\(mass) g · \(estVol) mL"
     }
 
     static func metricDots(for record: Record) -> [MetricDot] {
         [
-            MetricDot(zone: zoneIndex(for: record.typeAge, zoneCount: typeAgeLabels.count), zoneCount: typeAgeLabels.count),
-            MetricDot(zone: zoneIndex(for: record.typePosition, zoneCount: typePositionLabels.count), zoneCount: typePositionLabels.count),
-            MetricDot(zone: zoneIndex(for: record.typeExistence, zoneCount: typeExistenceLabels.count), zoneCount: typeExistenceLabels.count),
-            MetricDot(zone: zoneIndex(for: record.time, zoneCount: timeLabels.count), zoneCount: timeLabels.count),
-            MetricDot(zone: zoneIndex(for: (record.sound + 1) / 2, zoneCount: soundLabels.count), zoneCount: soundLabels.count),
-            MetricDot(zone: zoneIndex(for: record.atm, zoneCount: atmLabels.count), zoneCount: atmLabels.count),
-            MetricDot(zone: zoneIndex(for: record.postnut, zoneCount: postnutLabels.count), zoneCount: postnutLabels.count),
-            MetricDot(zone: zoneIndex(for: record.horny, zoneCount: hornyLabels.count), zoneCount: hornyLabels.count)
+            MetricDot(zone: record.typeAge.map { zoneIndex(for: $0, zoneCount: typeAgeLabels.count) }, zoneCount: typeAgeLabels.count),
+            MetricDot(zone: record.typePosition.map { zoneIndex(for: $0, zoneCount: typePositionLabels.count) }, zoneCount: typePositionLabels.count),
+            MetricDot(zone: record.typeExistence.map { zoneIndex(for: $0, zoneCount: typeExistenceLabels.count) }, zoneCount: typeExistenceLabels.count),
+            MetricDot(zone: record.time.map { zoneIndex(for: $0, zoneCount: timeLabels.count) }, zoneCount: timeLabels.count),
+            MetricDot(zone: record.sound.map { zoneIndex(for: ($0 + 1) / 2, zoneCount: soundLabels.count) }, zoneCount: soundLabels.count),
+            MetricDot(zone: record.atm.map { zoneIndex(for: $0, zoneCount: atmLabels.count) }, zoneCount: atmLabels.count),
+            MetricDot(zone: record.postnut.map { zoneIndex(for: $0, zoneCount: postnutLabels.count) }, zoneCount: postnutLabels.count),
+            MetricDot(zone: record.horny.map { zoneIndex(for: $0, zoneCount: hornyLabels.count) }, zoneCount: hornyLabels.count)
         ]
     }
 
