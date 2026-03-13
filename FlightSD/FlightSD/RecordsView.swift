@@ -26,7 +26,7 @@ struct RecordsView: View {
     private let bigTitleFontSize: CGFloat = 34
     private let monthTitleFontSize: CGFloat = 25
     private let filterButtonSize: CGFloat = 39
-    private let filterButtonIconSize: CGFloat = 29
+    private let filterButtonIconSize: CGFloat = 25
     private let filterButtonTrailingPadding: CGFloat = 14
 
     private var filteredRecords: [Record] {
@@ -108,7 +108,7 @@ struct RecordsView: View {
 
                             Image(systemName: "line.3.horizontal.decrease.circle.fill")
                                 .font(.system(size: filterButtonIconSize, weight: .semibold))
-                                .foregroundStyle(appliedFilter.isActive ? Color.white : Color.secondary)
+                                .foregroundStyle(appliedFilter.isActive ? Color.accentColor : Color.secondary)
                         }
                         .frame(width: filterButtonSize, height: filterButtonSize)
                         .contentShape(Circle())
