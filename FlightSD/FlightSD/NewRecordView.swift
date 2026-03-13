@@ -9,6 +9,7 @@ struct NewRecordView: View {
 
     @State private var activeField: Int? = 0
     @State private var showIntroCard: Bool = false
+    @State private var scrollRequestToken: Int = 0
 
     @State private var dimension: Dimension? = nil
     @State private var mediaType: MediaType? = nil
@@ -33,6 +34,8 @@ struct NewRecordView: View {
     private let postnutLabels = ["很开心", "没感觉", "有点累", "眼皮打架"]
     private let hornyLabels = ["低", "中低", "中高", "高"]
     private let scrollAnchor = UnitPoint(x: 0.5, y: 0.5)
+    private let fieldTransitionAnimation = Animation.easeInOut(duration: 0.24)
+    private let scrollAnimation = Animation.easeInOut(duration: 0.2)
 
     private var filledStatus: [Bool] {
         [
@@ -423,11 +426,11 @@ struct NewRecordView: View {
 
     private func advance(from index: Int) {
         if let next = (index + 1 ..< filledStatus.count).first(where: { !filledStatus[$0] }) {
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.82)) {
+            withAnimation(fieldTransitionAnimation) {
                 activeField = next
             }
         } else {
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.82)) {
+            withAnimation(fieldTransitionAnimation) {
                 activeField = nil
             }
         }
@@ -511,13 +514,28 @@ struct NewRecordView: View {
     private func scrollToField(_ index: Int?, using proxy: ScrollViewProxy, animated: Bool) {
         guard let index else { return }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) {
+        scrollRequestToken += 1
+        let token = scrollRequestToken
+
+        let performScroll = {
+            guard token == scrollRequestToken else { return }
+
             if animated {
-                withAnimation(.easeInOut(duration: 0.34)) {
+                withAnimation(scrollAnimation) {
                     proxy.scrollTo(fieldScrollID(index), anchor: scrollAnchor)
                 }
             } else {
                 proxy.scrollTo(fieldScrollID(index), anchor: scrollAnchor)
+            }
+        }
+
+        if animated {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
+                performScroll()
+            }
+        } else {
+            DispatchQueue.main.async {
+                performScroll()
             }
         }
     }
@@ -622,10 +640,12 @@ struct FieldRow<Content: View>: View {
         activeField == index
     }
 
+    private let rowAnimation = Animation.easeInOut(duration: 0.24)
+
     var body: some View {
         VStack(spacing: 0) {
             Button {
-                withAnimation(.spring(response: 0.32, dampingFraction: 0.82)) {
+                withAnimation(rowAnimation) {
                     activeField = isExpanded ? nil : index
                 }
             } label: {
@@ -661,7 +681,7 @@ struct FieldRow<Content: View>: View {
                 content()
                     .padding(.horizontal, 18)
                     .padding(.vertical, 18)
-                    .transition(.move(edge: .top).combined(with: .opacity))
+                    .transition(.opacity.combined(with: .scale(scale: 0.98, anchor: .top)))
             }
         }
         .background {
