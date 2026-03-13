@@ -100,16 +100,9 @@ struct RecordsView: View {
                         draftFilter = appliedFilter
                         isShowingFilterSheet = true
                     } label: {
-                        ZStack {
-                            if appliedFilter.isActive {
-                                Circle()
-                                    .fill(Color.accentColor)
-                            }
-
-                            Image(systemName: "line.3.horizontal.decrease.circle.fill")
-                                .font(.system(size: filterButtonIconSize, weight: .semibold))
-                                .foregroundStyle(appliedFilter.isActive ? Color.white : Color.secondary)
-                        }
+                        Image(systemName: "line.3.horizontal.decrease.circle.fill")
+                            .font(.system(size: filterButtonIconSize, weight: .semibold))
+                            .foregroundStyle(appliedFilter.isActive ? Color.accentColor : Color.secondary)
                         .frame(width: filterButtonSize, height: filterButtonSize)
                         .contentShape(Circle())
                     }
