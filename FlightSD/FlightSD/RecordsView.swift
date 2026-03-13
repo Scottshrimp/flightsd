@@ -9,12 +9,8 @@ struct RecordsView: View {
     @Query(sort: \Record.timestamp, order: .reverse) private var records: [Record]
 
     @State private var expandedRecordID: PersistentIdentifier?
-    @State private var scrollBridge = RecordsScrollBridge()
-
     private let scrollAnchor = UnitPoint(x: 0.5, y: -0.03)
     private let recordListSpacing: CGFloat = 12
-    private let editorCollapseDuration: Double = 0.28
-    private let deleteRemovalDuration: Double = 0.18
 
     private var groupedRecords: RecordGroups {
         RecordGroups(records: records, calendar: .current)
@@ -46,15 +42,6 @@ struct RecordsView: View {
                 .padding(.top, 24)
                 .padding(.bottom, 20)
             }
-            .coordinateSpace(name: "RecordsScrollViewport")
-            .background {
-                RecordsScrollIntrospectionView { scrollView in
-                    scrollBridge.scrollView = scrollView
-                }
-            }
-            .onPreferenceChange(RecordCardHeightPreferenceKey.self) { newValue in
-                scrollBridge.cardHeights = newValue
-            }
             .safeAreaInset(edge: .bottom, spacing: 0) {
                 AddRecordBar {
                     appState.showNewRecord = true
@@ -79,27 +66,14 @@ struct RecordsView: View {
                             isExpanded: expandedRecordID == record.persistentModelID,
                             onToggle: { toggle(record, using: proxy) },
                             onTopDone: { finishEditing(record) },
-                            onBottomDone: { collapseDistance in
-                                finishEditingAnchoredBelow(record, collapseDistance: collapseDistance)
+                            onBottomDone: {
+                                finishEditingScrollingBelow(record, using: proxy)
                             },
-                            onDeleteConfirmed: { collapseDistance, performDelete in
-                                prepareDeleteAnchoredBelow(
-                                    record,
-                                    collapseDistance: collapseDistance,
-                                    performDelete: performDelete
-                                )
+                            onDeleteConfirmed: { performDelete in
+                                prepareDeleteScrollingBelow(record, using: proxy, performDelete: performDelete)
                             }
                         )
                         .id(record.persistentModelID)
-                        .background(alignment: .top) {
-                            GeometryReader { geometry in
-                                Color.clear
-                                    .preference(
-                                        key: RecordCardHeightPreferenceKey.self,
-                                        value: [record.persistentModelID: geometry.size.height]
-                                    )
-                            }
-                        }
                     }
                 }
             }
@@ -129,27 +103,14 @@ struct RecordsView: View {
                                         isExpanded: expandedRecordID == record.persistentModelID,
                                         onToggle: { toggle(record, using: proxy) },
                                         onTopDone: { finishEditing(record) },
-                                        onBottomDone: { collapseDistance in
-                                            finishEditingAnchoredBelow(record, collapseDistance: collapseDistance)
+                                        onBottomDone: {
+                                            finishEditingScrollingBelow(record, using: proxy)
                                         },
-                                        onDeleteConfirmed: { collapseDistance, performDelete in
-                                            prepareDeleteAnchoredBelow(
-                                                record,
-                                                collapseDistance: collapseDistance,
-                                                performDelete: performDelete
-                                            )
+                                        onDeleteConfirmed: { performDelete in
+                                            prepareDeleteScrollingBelow(record, using: proxy, performDelete: performDelete)
                                         }
                                     )
                                     .id(record.persistentModelID)
-                                    .background(alignment: .top) {
-                                        GeometryReader { geometry in
-                                            Color.clear
-                                                .preference(
-                                                    key: RecordCardHeightPreferenceKey.self,
-                                                    value: [record.persistentModelID: geometry.size.height]
-                                                )
-                                        }
-                                    }
                                 }
                             }
                         }
@@ -160,10 +121,12 @@ struct RecordsView: View {
     }
 
     private func toggle(_ record: Record, using proxy: ScrollViewProxy) {
-        if expandedRecordID == record.persistentModelID {
-            expandedRecordID = nil
-        } else {
-            expandedRecordID = record.persistentModelID
+        withAnimation(.spring(response: 0.32, dampingFraction: 0.82)) {
+            if expandedRecordID == record.persistentModelID {
+                expandedRecordID = nil
+            } else {
+                expandedRecordID = record.persistentModelID
+            }
         }
 
         if expandedRecordID != nil {
@@ -172,35 +135,51 @@ struct RecordsView: View {
     }
 
     private func finishEditing(_ record: Record) {
-        expandedRecordID = nil
+        withAnimation(.spring(response: 0.28, dampingFraction: 0.84)) {
+            expandedRecordID = nil
+        }
     }
 
-    private func finishEditingAnchoredBelow(_ record: Record, collapseDistance: CGFloat) {
-        scrollBridge.animateCompensation(distance: collapseDistance, duration: editorCollapseDuration)
-        expandedRecordID = nil
+    private func finishEditingScrollingBelow(_ record: Record, using proxy: ScrollViewProxy) {
+        let nextID = nextRecordID(after: record)
+
+        withAnimation(.spring(response: 0.28, dampingFraction: 0.84)) {
+            expandedRecordID = nil
+        }
+
+        if let nextID {
+            scrollToRecord(nextID, using: proxy, delay: 0.08)
+        }
     }
 
-    private func prepareDeleteAnchoredBelow(
+    private func prepareDeleteScrollingBelow(
         _ record: Record,
-        collapseDistance: CGFloat,
+        using proxy: ScrollViewProxy,
         performDelete: @escaping () -> Void
     ) {
-        let bridge = scrollBridge
-        let collapseDuration = editorCollapseDuration
-        let deleteDuration = deleteRemovalDuration
-        let spacing = recordListSpacing
-        let expandedCardHeight = bridge.cardHeights[record.persistentModelID] ?? 0
+        let nextID = nextRecordID(after: record)
 
-        bridge.animateCompensation(distance: collapseDistance, duration: collapseDuration)
-        expandedRecordID = nil
+        withAnimation(.spring(response: 0.28, dampingFraction: 0.84)) {
+            expandedRecordID = nil
+        }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + collapseDuration) {
-            let collapsedCardHeight = max(expandedCardHeight - collapseDistance, 0)
-            let deleteDistance = collapsedCardHeight + spacing
+        if let nextID {
+            scrollToRecord(nextID, using: proxy, delay: 0.08)
+        }
 
-            bridge.animateCompensation(distance: deleteDistance, duration: deleteDuration)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
             performDelete()
         }
+    }
+
+    private func nextRecordID(after record: Record) -> PersistentIdentifier? {
+        guard let currentIndex = records.firstIndex(where: { $0.persistentModelID == record.persistentModelID }) else {
+            return nil
+        }
+
+        let nextIndex = records.index(after: currentIndex)
+        guard records.indices.contains(nextIndex) else { return nil }
+        return records[nextIndex].persistentModelID
     }
 
     private func scrollToRecord(_ id: PersistentIdentifier, using proxy: ScrollViewProxy, delay: Double) {
@@ -212,190 +191,27 @@ struct RecordsView: View {
     }
 }
 
-private struct RecordCardHeightPreferenceKey: PreferenceKey {
-    static var defaultValue: [PersistentIdentifier: CGFloat] = [:]
-
-    static func reduce(value: inout [PersistentIdentifier: CGFloat], nextValue: () -> [PersistentIdentifier: CGFloat]) {
-        value.merge(nextValue(), uniquingKeysWith: { _, new in new })
-    }
-}
-
-private struct RecordsScrollIntrospectionView: UIViewRepresentable {
-    let onResolve: (UIScrollView) -> Void
-
-    func makeUIView(context: Context) -> RecordsScrollResolverView {
-        let view = RecordsScrollResolverView()
-        view.onResolve = onResolve
-        return view
-    }
-
-    func updateUIView(_ uiView: RecordsScrollResolverView, context: Context) {
-        uiView.onResolve = onResolve
-        uiView.resolveScrollViewIfNeeded()
-    }
-}
-
-private final class RecordsScrollResolverView: UIView {
-    var onResolve: ((UIScrollView) -> Void)?
-
-    override func didMoveToWindow() {
-        super.didMoveToWindow()
-        resolveScrollViewIfNeeded()
-    }
-
-    func resolveScrollViewIfNeeded() {
-        DispatchQueue.main.async { [weak self] in
-            guard let self, let scrollView = self.enclosingScrollView() else { return }
-            self.onResolve?(scrollView)
-        }
-    }
-
-    private func enclosingScrollView() -> UIScrollView? {
-        var view = superview
-        while let current = view {
-            if let scrollView = current as? UIScrollView {
-                return scrollView
-            }
-            view = current.superview
-        }
-        return nil
-    }
-}
-
-private final class RecordsScrollBridge {
-    weak var scrollView: UIScrollView? {
-        didSet {
-            captureBaseInsetsIfNeeded()
-            applyExtraTopInset(extraTopInset, preservingViewport: false)
-        }
-    }
-    var cardHeights: [PersistentIdentifier: CGFloat] = [:]
-
-    private var baseContentInsetTop: CGFloat?
-    private var baseIndicatorInsetTop: CGFloat?
-    private var extraTopInset: CGFloat = 0
-    private var compensationToken = UUID()
-
-    private func captureBaseInsetsIfNeeded() {
-        guard let scrollView else { return }
-        if baseContentInsetTop == nil {
-            baseContentInsetTop = scrollView.contentInset.top
-        }
-        if baseIndicatorInsetTop == nil {
-            baseIndicatorInsetTop = scrollView.verticalScrollIndicatorInsets.top
-        }
-    }
-
-    private func applyExtraTopInset(_ extra: CGFloat, preservingViewport: Bool = true) {
-        guard let scrollView else {
-            extraTopInset = max(extra, 0)
-            return
-        }
-
-        captureBaseInsetsIfNeeded()
-
-        let clampedExtra = max(extra, 0)
-        let delta = clampedExtra - extraTopInset
-        extraTopInset = clampedExtra
-
-        var contentInset = scrollView.contentInset
-        contentInset.top = (baseContentInsetTop ?? contentInset.top) + clampedExtra
-        scrollView.contentInset = contentInset
-
-        var indicatorInsets = scrollView.verticalScrollIndicatorInsets
-        indicatorInsets.top = (baseIndicatorInsetTop ?? indicatorInsets.top) + clampedExtra
-        scrollView.verticalScrollIndicatorInsets = indicatorInsets
-
-        guard preservingViewport, abs(delta) > 0.5 else { return }
-
-        let minOffsetY = -((baseContentInsetTop ?? contentInset.top) + clampedExtra)
-        let maxOffsetY = max(
-            scrollView.contentSize.height - scrollView.bounds.height + scrollView.adjustedContentInset.bottom,
-            minOffsetY
-        )
-        let adjustedOffsetY = min(max(scrollView.contentOffset.y - delta, minOffsetY), maxOffsetY)
-
-        scrollView.setContentOffset(CGPoint(x: scrollView.contentOffset.x, y: adjustedOffsetY), animated: false)
-    }
-
-    func animateCompensation(distance: CGFloat, duration: Double) {
-        guard distance > 0 else { return }
-        captureBaseInsetsIfNeeded()
-        applyExtraTopInset(max(extraTopInset, distance + 24))
-        guard let scrollView else { return }
-
-        let token = UUID()
-        compensationToken = token
-        let startTime = CACurrentMediaTime()
-        let startOffsetY = scrollView.contentOffset.y
-        let minOffsetY = -((baseContentInsetTop ?? scrollView.contentInset.top) + extraTopInset)
-        let maxOffsetY = max(
-            scrollView.contentSize.height - scrollView.bounds.height + scrollView.adjustedContentInset.bottom,
-            minOffsetY
-        )
-        let targetOffsetY = min(max(startOffsetY - distance, minOffsetY), maxOffsetY)
-
-        func step() {
-            guard compensationToken == token else { return }
-            defer {
-                if CACurrentMediaTime() - startTime < duration {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + (1.0 / 120.0)) {
-                        step()
-                    }
-                } else {
-                    settleTopInset()
-                }
-            }
-
-            guard let currentScrollView = self.scrollView else { return }
-
-            let elapsed = min(max((CACurrentMediaTime() - startTime) / duration, 0), 1)
-            let progress = 0.5 - (cos(.pi * elapsed) / 2)
-            let adjustedOffsetY = startOffsetY + (targetOffsetY - startOffsetY) * progress
-
-            currentScrollView.setContentOffset(
-                CGPoint(x: currentScrollView.contentOffset.x, y: adjustedOffsetY),
-                animated: false
-            )
-        }
-
-        step()
-    }
-
-    private func settleTopInset() {
-        guard let scrollView else { return }
-        let baseTop = baseContentInsetTop ?? scrollView.contentInset.top
-        let requiredExtra = max(0, -baseTop - scrollView.contentOffset.y)
-        applyExtraTopInset(requiredExtra)
-    }
-}
-
 private struct RecordEntryCard: View {
     let record: Record
     let isExpanded: Bool
     let onToggle: () -> Void
     let onTopDone: () -> Void
-    let onBottomDone: (CGFloat) -> Void
-    let onDeleteConfirmed: (CGFloat, @escaping () -> Void) -> Void
+    let onBottomDone: () -> Void
+    let onDeleteConfirmed: (@escaping () -> Void) -> Void
 
     @Environment(\.modelContext) private var modelContext
     @State private var draft: RecordDraft
     @State private var showDeleteConfirmation = false
-    @State private var keepsExpandedEditorMounted = false
-    @State private var measuredExpandedHeight: CGFloat = 0
-    @State private var visibleExpandedHeight: CGFloat = 0
-    @State private var collapseToken = UUID()
 
     private let cardCornerRadius: CGFloat = 14
-    private let editorAnimationDuration: Double = 0.28
 
     init(
         record: Record,
         isExpanded: Bool,
         onToggle: @escaping () -> Void,
         onTopDone: @escaping () -> Void,
-        onBottomDone: @escaping (CGFloat) -> Void,
-        onDeleteConfirmed: @escaping (CGFloat, @escaping () -> Void) -> Void
+        onBottomDone: @escaping () -> Void,
+        onDeleteConfirmed: @escaping (@escaping () -> Void) -> Void
     ) {
         self.record = record
         self.isExpanded = isExpanded
@@ -418,13 +234,21 @@ private struct RecordEntryCard: View {
             }
             .buttonStyle(.plain)
 
-            if keepsExpandedEditorMounted {
-                editorContent
-                .frame(height: visibleExpandedHeight, alignment: .top)
-                .clipped()
-                .background(alignment: .top) {
-                    editorMeasurementLayer
+            if isExpanded {
+                VStack(spacing: 0) {
+                    Divider()
+                        .padding(.horizontal, 18)
+
+                    RecordInlineEditor(draft: $draft) {
+                        saveChanges(scrollsToNextRecord: false)
+                    } onBottomDone: {
+                        saveChanges(scrollsToNextRecord: true)
+                    } onDelete: {
+                        showDeleteConfirmation = true
+                    }
                 }
+                .clipped()
+                .transition(.recordsVerticalReveal)
             }
         }
         .background {
@@ -437,27 +261,9 @@ private struct RecordEntryCard: View {
         }
         .clipShape(RoundedRectangle(cornerRadius: cardCornerRadius, style: .continuous))
         .shadow(color: .black.opacity(0.04), radius: 12, y: 6)
-        .onAppear {
-            syncExpandedEditor(animated: false)
-        }
         .onChange(of: isExpanded) { _, expanded in
             if expanded {
                 draft = RecordDraft(record: record)
-            }
-            syncExpandedEditor(animated: true)
-        }
-        .onPreferenceChange(RecordExpandedContentHeightPreferenceKey.self) { newHeight in
-            guard newHeight > 0 else { return }
-            measuredExpandedHeight = newHeight
-
-            guard keepsExpandedEditorMounted, isExpanded else { return }
-
-            if visibleExpandedHeight == 0 {
-                withAnimation(editorAnimation) {
-                    visibleExpandedHeight = newHeight
-                }
-            } else {
-                visibleExpandedHeight = newHeight
             }
         }
         .alert("是否要删除记录", isPresented: $showDeleteConfirmation) {
@@ -490,92 +296,46 @@ private struct RecordEntryCard: View {
         try? modelContext.save()
 
         if scrollsToNextRecord {
-            onBottomDone(measuredExpandedHeight)
+            onBottomDone()
         } else {
             onTopDone()
         }
     }
 
     private func deleteRecord() {
-        onDeleteConfirmed(measuredExpandedHeight) {
+        onDeleteConfirmed {
             modelContext.delete(record)
             try? modelContext.save()
         }
     }
+}
 
-    private var editorAnimation: Animation {
-        .easeInOut(duration: editorAnimationDuration)
+private struct RecordsVerticalRevealModifier: AnimatableModifier {
+    var progress: CGFloat
+    private let travel: CGFloat = 28
+
+    var animatableData: CGFloat {
+        get { progress }
+        set { progress = newValue }
     }
 
-    private var editorContent: some View {
-        VStack(spacing: 0) {
-            Divider()
-                .padding(.horizontal, 18)
-
-            RecordInlineEditor(draft: $draft) {
-                saveChanges(scrollsToNextRecord: false)
-            } onBottomDone: {
-                saveChanges(scrollsToNextRecord: true)
-            } onDelete: {
-                showDeleteConfirmation = true
+    func body(content: Content) -> some View {
+        content
+            .offset(y: (1 - progress) * -travel)
+            .mask(alignment: .top) {
+                Rectangle()
+                    .scaleEffect(x: 1, y: max(progress, 0.001), anchor: .top)
             }
-        }
-    }
-
-    private var editorMeasurementLayer: some View {
-        editorContent
-            .fixedSize(horizontal: false, vertical: true)
-            .hidden()
-            .allowsHitTesting(false)
-            .accessibilityHidden(true)
-            .background {
-                GeometryReader { geometry in
-                    Color.clear
-                        .preference(key: RecordExpandedContentHeightPreferenceKey.self, value: geometry.size.height)
-                }
-            }
-    }
-
-    private func syncExpandedEditor(animated: Bool) {
-        if isExpanded {
-            keepsExpandedEditorMounted = true
-
-            guard measuredExpandedHeight > 0 else { return }
-
-            if animated {
-                withAnimation(editorAnimation) {
-                    visibleExpandedHeight = measuredExpandedHeight
-                }
-            } else {
-                visibleExpandedHeight = measuredExpandedHeight
-            }
-        } else {
-            guard keepsExpandedEditorMounted else { return }
-
-            collapseToken = UUID()
-            let token = collapseToken
-
-            if animated {
-                withAnimation(editorAnimation) {
-                    visibleExpandedHeight = 0
-                }
-            } else {
-                visibleExpandedHeight = 0
-            }
-
-            DispatchQueue.main.asyncAfter(deadline: .now() + editorAnimationDuration) {
-                guard token == collapseToken, !isExpanded else { return }
-                keepsExpandedEditorMounted = false
-            }
-        }
+            .opacity(progress)
     }
 }
 
-private struct RecordExpandedContentHeightPreferenceKey: PreferenceKey {
-    static var defaultValue: CGFloat = 0
-
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = nextValue()
+private extension AnyTransition {
+    static var recordsVerticalReveal: AnyTransition {
+        .modifier(
+            active: RecordsVerticalRevealModifier(progress: 0),
+            identity: RecordsVerticalRevealModifier(progress: 1)
+        )
     }
 }
 
