@@ -1,5 +1,8 @@
 import SwiftUI
 import SwiftData
+#if canImport(CoreHaptics)
+import CoreHaptics
+#endif
 #if canImport(UIKit)
 import UIKit
 #endif
@@ -12,7 +15,7 @@ struct RecordsView: View {
     private let scrollAnchor = UnitPoint(x: 0.5, y: -0.03)
     private let recordListSpacing: CGFloat = 14
     private let sectionSpacing: CGFloat = 32
-    private let sectionHeaderSpacing: CGFloat = 18
+    private let sectionHeaderSpacing: CGFloat = 24
     private let monthGroupSpacing: CGFloat = 24
     private let bigTitleFontSize: CGFloat = 34
     private let monthTitleFontSize: CGFloat = 25
@@ -820,9 +823,7 @@ private struct EditorActionButton: View {
     }
 
     private func triggerImpact() {
-#if canImport(UIKit)
-        UIImpactFeedbackGenerator(style: .light).impactOccurred()
-#endif
+        EditorActionHaptics.shared.play(for: variant)
     }
 }
 
@@ -862,6 +863,185 @@ private struct EditorActionButtonStyle {
         case .destructive:
             return Color.red.opacity(isDisabled ? 0.55 : 1)
         }
+    }
+}
+
+private struct EditorActionHapticEvent {
+    enum Kind {
+        case transient
+        case continuous
+    }
+
+    let kind: Kind
+    let intensity: Float
+    let sharpness: Float
+    let relativeTime: TimeInterval
+    var duration: TimeInterval? = nil
+}
+
+private struct EditorActionHapticConfiguration {
+    let events: [EditorActionHapticEvent]
+}
+
+private final class EditorActionHaptics {
+    static let shared = EditorActionHaptics()
+
+    // Tune these event lists directly to change the Done/Delete button feel.
+    private let doneConfiguration = EditorActionHapticConfiguration(
+        events: [
+            EditorActionHapticEvent(
+                kind: .transient,
+                intensity: 0.2,
+                sharpness: 0.45,
+                relativeTime: 0
+            ),
+            EditorActionHapticEvent(
+                kind: .continuous,
+                intensity: 0.1,
+                sharpness: 0.1,
+                relativeTime: 0,
+                duration:0.3
+            ),
+            EditorActionHapticEvent(
+                kind: .transient,
+                intensity: 1.0,
+                sharpness: 0.8,
+                relativeTime: 0.3
+            )
+        ]
+    )
+    private let deleteConfiguration = EditorActionHapticConfiguration(
+        events: [
+            EditorActionHapticEvent(
+                kind: .transient,
+                intensity: 0.5,
+                sharpness: 0.1,
+                relativeTime: 0
+            ),
+            EditorActionHapticEvent(
+                kind: .transient,
+                intensity: 0.0,
+                sharpness: 0.0,
+                relativeTime: 0.06
+            )
+        ]
+    )
+
+#if canImport(CoreHaptics)
+    private let supportsHaptics = CHHapticEngine.capabilitiesForHardware().supportsHaptics
+    private var engine: CHHapticEngine?
+#endif
+
+    private init() {
+#if canImport(CoreHaptics)
+        configureEngineIfNeeded()
+#endif
+    }
+
+    func play(for variant: EditorActionButtonStyle.Variant) {
+        let configuration = configuration(for: variant)
+
+#if canImport(CoreHaptics)
+        guard supportsHaptics else {
+            fallbackImpact(for: variant)
+            return
+        }
+
+        startEngineIfNeeded()
+        guard let engine else {
+            fallbackImpact(for: variant)
+            return
+        }
+
+        let events = configuration.events.compactMap { hapticEvent(for: $0) }
+        guard !events.isEmpty else {
+            fallbackImpact(for: variant)
+            return
+        }
+
+        do {
+            let pattern = try CHHapticPattern(events: events, parameters: [])
+            let player = try engine.makePlayer(with: pattern)
+            try player.start(atTime: 0)
+        } catch {
+            fallbackImpact(for: variant)
+        }
+#else
+        fallbackImpact(for: variant)
+#endif
+    }
+
+    private func configuration(for variant: EditorActionButtonStyle.Variant) -> EditorActionHapticConfiguration {
+        switch variant {
+        case .prominent:
+            return doneConfiguration
+        case .destructive:
+            return deleteConfiguration
+        }
+    }
+
+    private func hapticEvent(for event: EditorActionHapticEvent) -> CHHapticEvent? {
+        let parameters = [
+            CHHapticEventParameter(parameterID: .hapticIntensity, value: event.intensity),
+            CHHapticEventParameter(parameterID: .hapticSharpness, value: event.sharpness)
+        ]
+
+        switch event.kind {
+        case .transient:
+            return CHHapticEvent(
+                eventType: .hapticTransient,
+                parameters: parameters,
+                relativeTime: event.relativeTime
+            )
+        case .continuous:
+            return CHHapticEvent(
+                eventType: .hapticContinuous,
+                parameters: parameters,
+                relativeTime: event.relativeTime,
+                duration: event.duration ?? 0.1
+            )
+        }
+    }
+
+#if canImport(CoreHaptics)
+    private func configureEngineIfNeeded() {
+        guard supportsHaptics else { return }
+
+        do {
+            engine = try CHHapticEngine()
+            engine?.isAutoShutdownEnabled = true
+            engine?.stoppedHandler = { [weak self] _ in
+                self?.engine = nil
+            }
+            engine?.resetHandler = { [weak self] in
+                self?.configureEngineIfNeeded()
+                self?.startEngineIfNeeded()
+            }
+        } catch {
+            engine = nil
+        }
+    }
+
+    private func startEngineIfNeeded() {
+        guard supportsHaptics else { return }
+        if engine == nil {
+            configureEngineIfNeeded()
+        }
+        try? engine?.start()
+    }
+#endif // canImport(CoreHaptics)
+
+    private func fallbackImpact(for variant: EditorActionButtonStyle.Variant) {
+#if canImport(UIKit)
+        let style: UIImpactFeedbackGenerator.FeedbackStyle
+        switch variant {
+        case .prominent:
+            style = .soft
+        case .destructive:
+            style = .rigid
+        }
+        UIImpactFeedbackGenerator(style: style).impactOccurred()
+#endif // canImport(UIKit)
     }
 }
 
