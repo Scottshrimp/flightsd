@@ -28,7 +28,7 @@ struct RecordsView: View {
 
                 earlierSection
             }
-            .padding(.horizontal, 16)
+            .padding(.horizontal, 14)
             .padding(.top, 24)
             .padding(.bottom, 20)
         }
@@ -200,13 +200,13 @@ private struct RecordSummaryRow: View {
                     MetricDotStrip(metrics: RecordPresentation.metricDots(for: record))
 
                     Text(RecordPresentation.metricSummary(for: record))
-                        .font(.caption2)
+                        .font(.caption.weight(.medium))
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
 
                 Text(RecordPresentation.mediaCategory(for: record))
-                    .font(.caption.weight(.semibold))
+                    .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.primary)
                     .lineLimit(1)
                     .fixedSize(horizontal: true, vertical: false)
@@ -225,12 +225,12 @@ private struct TimestampLine: View {
         HStack(spacing: 6) {
             if let dateText = RecordPresentation.dateText(for: timestamp) {
                 Text(dateText)
-                    .font(.caption2.weight(.medium))
+                    .font(.caption.weight(.medium))
                     .foregroundStyle(.secondary)
             }
 
             Text(RecordPresentation.timeText(for: timestamp))
-                .font(.caption.weight(.semibold))
+                .font(.subheadline.weight(.semibold))
                 .foregroundStyle(.primary)
         }
         .lineLimit(1)
