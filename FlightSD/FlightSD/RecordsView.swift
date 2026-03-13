@@ -108,7 +108,7 @@ struct RecordsView: View {
 
                             Image(systemName: "line.3.horizontal.decrease.circle.fill")
                                 .font(.system(size: filterButtonIconSize, weight: .semibold))
-                                .foregroundStyle(appliedFilter.isActive ? Color.accentColor : Color.secondary)
+                                .foregroundStyle(appliedFilter.isActive ? Color.white : Color.secondary)
                         }
                         .frame(width: filterButtonSize, height: filterButtonSize)
                         .contentShape(Circle())
