@@ -405,14 +405,26 @@ private struct AddRecordBar: View {
     let action: () -> Void
 
     private var gradientColors: [Color] {
-        let darkerBlue = Color(red: 0, green: 114.0 / 255.0, blue: 0.98)
-        let lighterBlue = Color(red: 24.0 / 255.0, green: 134.0 / 255.0, blue: 1)
+        let darkerBlue = Color(red: 0, green: 111.0 / 255.0, blue: 248.0 / 255.0)
+        let lighterBlue = Color(red: 32.0 / 255.0, green: 138.0 / 255.0, blue: 1)
 
         if colorScheme == .dark {
             return [lighterBlue, darkerBlue]
         }
 
         return [darkerBlue, lighterBlue]
+    }
+
+    private func diagonalGradient(in size: CGSize) -> LinearGradient {
+        let width = max(size.width, 1)
+        let height = max(size.height, 1)
+        let halfHorizontalOffset = min(height / width, 0.22) / 2
+
+        return LinearGradient(
+            colors: gradientColors,
+            startPoint: UnitPoint(x: 0.5 - halfHorizontalOffset, y: 1),
+            endPoint: UnitPoint(x: 0.5 + halfHorizontalOffset, y: 0)
+        )
     }
 
     var body: some View {
@@ -441,17 +453,13 @@ private struct AddRecordBar: View {
                 Rectangle()
                     .fill(.ultraThinMaterial)
 
-                Rectangle()
-                    .fill(
-                        LinearGradient(
-                            colors: gradientColors,
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-                    .saturation(1.3)
-                    .brightness(-0.05)
-                    .opacity(0.60)
+                GeometryReader { proxy in
+                    Rectangle()
+                        .fill(diagonalGradient(in: proxy.size))
+                        .saturation(1.3)
+                        .brightness(-0.05)
+                        .opacity(0.60)
+                }
             }
         }
         .overlay(alignment: .top) {
