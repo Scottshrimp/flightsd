@@ -147,7 +147,7 @@ private struct RecordEntryCard: View {
                     }
                 }
                 .clipped()
-                .transition(.move(edge: .top).combined(with: .opacity))
+                .transition(.recordsVerticalReveal)
             }
         }
         .background {
@@ -189,6 +189,30 @@ private struct RecordEntryCard: View {
         withAnimation(.spring(response: 0.28, dampingFraction: 0.84)) {
             onDone()
         }
+    }
+}
+
+private struct RecordsVerticalRevealModifier: AnimatableModifier {
+    var progress: CGFloat
+
+    var animatableData: CGFloat {
+        get { progress }
+        set { progress = newValue }
+    }
+
+    func body(content: Content) -> some View {
+        content
+            .scaleEffect(x: 1, y: max(progress, 0.001), anchor: .top)
+            .opacity(progress)
+    }
+}
+
+private extension AnyTransition {
+    static var recordsVerticalReveal: AnyTransition {
+        .modifier(
+            active: RecordsVerticalRevealModifier(progress: 0),
+            identity: RecordsVerticalRevealModifier(progress: 1)
+        )
     }
 }
 

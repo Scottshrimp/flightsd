@@ -666,7 +666,7 @@ struct FieldRow<Content: View>: View {
                         .padding(.vertical, 18)
                 }
                 .clipped()
-                .transition(.move(edge: .top).combined(with: .opacity))
+                .transition(.newRecordVerticalReveal)
             }
         }
         .background {
@@ -679,6 +679,30 @@ struct FieldRow<Content: View>: View {
         }
         .clipShape(RoundedRectangle(cornerRadius: cardCornerRadius, style: .continuous))
         .shadow(color: .black.opacity(0.04), radius: 12, y: 6)
+    }
+}
+
+private struct NewRecordVerticalRevealModifier: AnimatableModifier {
+    var progress: CGFloat
+
+    var animatableData: CGFloat {
+        get { progress }
+        set { progress = newValue }
+    }
+
+    func body(content: Content) -> some View {
+        content
+            .scaleEffect(x: 1, y: max(progress, 0.001), anchor: .top)
+            .opacity(progress)
+    }
+}
+
+private extension AnyTransition {
+    static var newRecordVerticalReveal: AnyTransition {
+        .modifier(
+            active: NewRecordVerticalRevealModifier(progress: 0),
+            identity: NewRecordVerticalRevealModifier(progress: 1)
+        )
     }
 }
 
