@@ -47,8 +47,8 @@ struct RecordsView: View {
                     scrollBridge.scrollView = scrollView
                 }
             }
-            .onPreferenceChange(RecordViewportMinYPreferenceKey.self) { newValue in
-                scrollBridge.viewportMinY = newValue
+            .onPreferenceChange(RecordCardHeightPreferenceKey.self) { newValue in
+                scrollBridge.cardHeights = newValue
             }
             .safeAreaInset(edge: .bottom, spacing: 0) {
                 AddRecordBar {
@@ -81,8 +81,8 @@ struct RecordsView: View {
                             GeometryReader { geometry in
                                 Color.clear
                                     .preference(
-                                        key: RecordViewportMinYPreferenceKey.self,
-                                        value: [record.persistentModelID: geometry.frame(in: .named("RecordsScrollViewport")).minY]
+                                        key: RecordCardHeightPreferenceKey.self,
+                                        value: [record.persistentModelID: geometry.size.height]
                                     )
                             }
                         }
@@ -122,8 +122,8 @@ struct RecordsView: View {
                                         GeometryReader { geometry in
                                             Color.clear
                                                 .preference(
-                                                    key: RecordViewportMinYPreferenceKey.self,
-                                                    value: [record.persistentModelID: geometry.frame(in: .named("RecordsScrollViewport")).minY]
+                                                    key: RecordCardHeightPreferenceKey.self,
+                                                    value: [record.persistentModelID: geometry.size.height]
                                                 )
                                         }
                                     }
@@ -157,9 +157,7 @@ struct RecordsView: View {
     }
 
     private func finishEditingAnchoringNext(after record: Record) {
-        if let targetID = nextRecordID(after: record) {
-            scrollBridge.startAnchoring(targetID: targetID, duration: 0.42)
-        }
+        scrollBridge.startAnchoringCollapsingCard(recordID: record.persistentModelID, duration: 0.42)
 
         withAnimation(.spring(response: 0.28, dampingFraction: 0.84)) {
             expandedRecordID = nil
@@ -173,19 +171,9 @@ struct RecordsView: View {
             }
         }
     }
-
-    private func nextRecordID(after record: Record) -> PersistentIdentifier? {
-        guard let index = records.firstIndex(where: { $0.persistentModelID == record.persistentModelID }) else {
-            return nil
-        }
-
-        let nextIndex = records.index(after: index)
-        guard nextIndex < records.endIndex else { return nil }
-        return records[nextIndex].persistentModelID
-    }
 }
 
-private struct RecordViewportMinYPreferenceKey: PreferenceKey {
+private struct RecordCardHeightPreferenceKey: PreferenceKey {
     static var defaultValue: [PersistentIdentifier: CGFloat] = [:]
 
     static func reduce(value: inout [PersistentIdentifier: CGFloat], nextValue: () -> [PersistentIdentifier: CGFloat]) {
@@ -236,18 +224,29 @@ private final class RecordsScrollResolverView: UIView {
 }
 
 private final class RecordsScrollBridge {
-    weak var scrollView: UIScrollView?
-    var viewportMinY: [PersistentIdentifier: CGFloat] = [:]
+    weak var scrollView: UIScrollView? {
+        didSet {
+            captureBaseInsetsIfNeeded()
+            applyExtraTopInset(extraTopInset)
+        }
+    }
+    var cardHeights: [PersistentIdentifier: CGFloat] = [:]
 
     private var anchorToken = UUID()
+    private var baseContentInsetTop: CGFloat?
+    private var baseIndicatorInsetTop: CGFloat?
+    private var extraTopInset: CGFloat = 0
 
-    func startAnchoring(targetID: PersistentIdentifier, duration: Double) {
-        guard viewportMinY[targetID] != nil else { return }
+    func startAnchoringCollapsingCard(recordID: PersistentIdentifier, duration: Double) {
+        guard let initialHeight = cardHeights[recordID] else { return }
 
-        let anchorY = viewportMinY[targetID]
+        captureBaseInsetsIfNeeded()
+        applyExtraTopInset(max(extraTopInset, initialHeight))
+
         let token = UUID()
         anchorToken = token
         let startTime = CACurrentMediaTime()
+        var lastHeight = initialHeight
 
         func step() {
             guard self.anchorToken == token else { return }
@@ -256,21 +255,24 @@ private final class RecordsScrollBridge {
                     DispatchQueue.main.asyncAfter(deadline: .now() + (1.0 / 120.0)) {
                         step()
                     }
+                } else {
+                    self.settleTopInset()
                 }
             }
 
             guard
-                let scrollView = self.scrollView,
-                let anchorY,
-                let currentY = self.viewportMinY[targetID]
+                let scrollView = self.scrollView
             else {
                 return
             }
 
-            let delta = anchorY - currentY
+            let currentHeight = self.cardHeights[recordID] ?? 0
+            let delta = currentHeight - lastHeight
+            lastHeight = currentHeight
+
             guard abs(delta) > 0.5 else { return }
 
-            let minOffsetY = -scrollView.adjustedContentInset.top
+            let minOffsetY = -((self.baseContentInsetTop ?? scrollView.contentInset.top) + self.extraTopInset)
             let maxOffsetY = max(
                 scrollView.contentSize.height - scrollView.bounds.height + scrollView.adjustedContentInset.bottom,
                 minOffsetY
@@ -281,6 +283,43 @@ private final class RecordsScrollBridge {
         }
 
         step()
+    }
+
+    private func captureBaseInsetsIfNeeded() {
+        guard let scrollView else { return }
+        if baseContentInsetTop == nil {
+            baseContentInsetTop = scrollView.contentInset.top
+        }
+        if baseIndicatorInsetTop == nil {
+            baseIndicatorInsetTop = scrollView.verticalScrollIndicatorInsets.top
+        }
+    }
+
+    private func applyExtraTopInset(_ extra: CGFloat) {
+        guard let scrollView else {
+            extraTopInset = extra
+            return
+        }
+
+        captureBaseInsetsIfNeeded()
+
+        let clampedExtra = max(extra, 0)
+        extraTopInset = clampedExtra
+
+        var contentInset = scrollView.contentInset
+        contentInset.top = (baseContentInsetTop ?? contentInset.top) + clampedExtra
+        scrollView.contentInset = contentInset
+
+        var indicatorInsets = scrollView.verticalScrollIndicatorInsets
+        indicatorInsets.top = (baseIndicatorInsetTop ?? indicatorInsets.top) + clampedExtra
+        scrollView.verticalScrollIndicatorInsets = indicatorInsets
+    }
+
+    private func settleTopInset() {
+        guard let scrollView else { return }
+        let baseTop = baseContentInsetTop ?? scrollView.contentInset.top
+        let requiredExtra = max(0, -baseTop - scrollView.contentOffset.y)
+        applyExtraTopInset(requiredExtra)
     }
 }
 
