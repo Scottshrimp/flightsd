@@ -32,7 +32,7 @@ struct NewRecordView: View {
     private let atmLabels = ["纯视觉", "偏视觉", "偏情境", "纯情境"]
     private let postnutLabels = ["很开心", "没感觉", "有点累", "眼皮打架"]
     private let hornyLabels = ["低", "中低", "中高", "高"]
-    private let scrollAnchor = UnitPoint(x: 0.5, y: 0.68)
+    private let scrollAnchor = UnitPoint(x: 0.5, y: 0.5)
 
     private var filledStatus: [Bool] {
         [
@@ -348,8 +348,8 @@ struct NewRecordView: View {
                 }
             }
             .padding(.horizontal, 16)
-            .padding(.top, 8)
             .padding(.bottom, 12)
+            .padding(.top, 12)
         }
         .frame(maxWidth: .infinity)
         .background {
@@ -362,6 +362,7 @@ struct NewRecordView: View {
                 .fill(Color.primary.opacity(0.08))
                 .frame(height: 1)
         }
+        .padding(.top, 8)
         .shadow(color: .black.opacity(0.04), radius: 12, y: -2)
     }
 
