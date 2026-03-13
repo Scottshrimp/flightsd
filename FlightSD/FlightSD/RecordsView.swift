@@ -608,6 +608,8 @@ private struct RecordSummaryRow: View {
         HStack(alignment: .center, spacing: 12) {
             TimestampLine(timestamp: record.timestamp)
 
+            MetricDotStrip(metrics: RecordPresentation.leadingMetricDots(for: record))
+
             Spacer(minLength: 8)
 
             HStack(alignment: .center, spacing: 10) {
@@ -896,13 +898,15 @@ private struct MetricEditorRow: View {
 
 private struct MetricDotStrip: View {
     let metrics: [MetricDot]
+    var dotSize: CGFloat = 6.5
+    var spacing: CGFloat = 4
 
     var body: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: spacing) {
             ForEach(Array(metrics.enumerated()), id: \.offset) { _, metric in
                 Circle()
                     .fill(dotColor(for: metric))
-                    .frame(width: 6.5, height: 6.5)
+                    .frame(width: dotSize, height: dotSize)
             }
         }
     }
@@ -1522,7 +1526,7 @@ private enum RecordPresentation {
     }
 
     static func metricSummary(for record: Record) -> String {
-        let mass = record.mass.map { numberText($0, maxFractionDigits: 1) } ?? "--"
+        let mass = record.mass.map { fixedNumberText($0, fractionDigits: 2) } ?? "--"
         let estVol = record.estVol.map { fixedNumberText($0, fractionDigits: 2) } ?? "--"
         return "\(mass) g · \(estVol) mL"
     }
@@ -1534,9 +1538,14 @@ private enum RecordPresentation {
             MetricDot(zone: record.typeExistence.map { zoneIndex(for: $0, zoneCount: typeExistenceLabels.count) }, zoneCount: typeExistenceLabels.count),
             MetricDot(zone: record.time.map { zoneIndex(for: $0, zoneCount: timeLabels.count) }, zoneCount: timeLabels.count),
             MetricDot(zone: record.sound.map { zoneIndex(for: ($0 + 1) / 2, zoneCount: soundLabels.count) }, zoneCount: soundLabels.count),
-            MetricDot(zone: record.atm.map { zoneIndex(for: $0, zoneCount: atmLabels.count) }, zoneCount: atmLabels.count),
-            MetricDot(zone: record.postnut.map { zoneIndex(for: $0, zoneCount: postnutLabels.count) }, zoneCount: postnutLabels.count),
-            MetricDot(zone: record.horny.map { zoneIndex(for: $0, zoneCount: hornyLabels.count) }, zoneCount: hornyLabels.count)
+            MetricDot(zone: record.atm.map { zoneIndex(for: $0, zoneCount: atmLabels.count) }, zoneCount: atmLabels.count)
+        ]
+    }
+
+    static func leadingMetricDots(for record: Record) -> [MetricDot] {
+        [
+            MetricDot(zone: record.horny.map { zoneIndex(for: $0, zoneCount: hornyLabels.count) }, zoneCount: hornyLabels.count),
+            MetricDot(zone: record.postnut.map { zoneIndex(for: $0, zoneCount: postnutLabels.count) }, zoneCount: postnutLabels.count)
         ]
     }
 

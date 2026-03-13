@@ -579,6 +579,7 @@ struct CustomSliderField: View {
             GeometryReader { geometry in
                 let trackWidth = geometry.size.width
                 let filledWidth = max(0, min(trackWidth, value * trackWidth))
+                let boundaryCount = max(labels.count - 1, 0)
 
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 11, style: .continuous)
@@ -587,9 +588,9 @@ struct CustomSliderField: View {
                             RoundedRectangle(cornerRadius: 11, style: .continuous)
                                 .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
                         }
-                        .frame(height: 22)
+                        .frame(height: 14)
 
-                    RoundedRectangle(cornerRadius: 11, style: .continuous)
+                    Rectangle()
                         .fill(
                             LinearGradient(
                                 colors: [
@@ -600,14 +601,19 @@ struct CustomSliderField: View {
                                 endPoint: .trailing
                             )
                         )
-                        .frame(width: filledWidth, height: 22)
-                        .overlay(alignment: .topLeading) {
-                            RoundedRectangle(cornerRadius: 11, style: .continuous)
-                                .fill(Color.white.opacity(isDragging ? 0.22 : 0.14))
-                                .frame(width: filledWidth, height: 10)
-                        }
+                        .frame(width: filledWidth, height: 14)
                         .animation(.easeInOut(duration: 0.12), value: isDragging)
+
+                    if boundaryCount > 0 {
+                        ForEach(1 ... boundaryCount, id: \.self) { boundary in
+                            Rectangle()
+                                .fill(Color.primary.opacity(0.18))
+                                .frame(width: 1, height: 14)
+                                .offset(x: trackWidth * CGFloat(boundary) / CGFloat(labels.count) - 0.5)
+                        }
+                    }
                 }
+                .clipShape(RoundedRectangle(cornerRadius: 11, style: .continuous))
                 .frame(height: 36)
                 .contentShape(Rectangle())
                 .gesture(
