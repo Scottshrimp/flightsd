@@ -7,34 +7,41 @@ struct RecordsView: View {
 
     @State private var expandedRecordID: PersistentIdentifier?
 
+    private let scrollAnchor = UnitPoint(x: 0.5, y: 0.5)
+
     private var groupedRecords: RecordGroups {
         RecordGroups(records: records, calendar: .current)
     }
 
     var body: some View {
-        ScrollView {
-            LazyVStack(alignment: .leading, spacing: 28) {
-                groupedSection(
-                    title: "今天",
-                    records: groupedRecords.today,
-                    emptyText: "今天还没有记录"
-                )
+        ScrollViewReader { proxy in
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 28) {
+                    groupedSection(
+                        title: "今天",
+                        records: groupedRecords.today,
+                        emptyText: "今天还没有记录"
+                    )
 
-                groupedSection(
-                    title: "过去一周",
-                    records: groupedRecords.pastWeek,
-                    emptyText: "过去一周还没有记录"
-                )
+                    groupedSection(
+                        title: "过去一周",
+                        records: groupedRecords.pastWeek,
+                        emptyText: "过去一周还没有记录"
+                    )
 
-                earlierSection
+                    earlierSection
+                }
+                .padding(.horizontal, 10)
+                .padding(.top, 24)
+                .padding(.bottom, 20)
             }
-            .padding(.horizontal, 10)
-            .padding(.top, 24)
-            .padding(.bottom, 20)
-        }
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            AddRecordBar {
-                appState.showNewRecord = true
+            .onChange(of: expandedRecordID) { _, newValue in
+                scrollToExpandedRecord(newValue, using: proxy)
+            }
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                AddRecordBar {
+                    appState.showNewRecord = true
+                }
             }
         }
     }
@@ -56,6 +63,7 @@ struct RecordsView: View {
                             onToggle: { toggle(record) },
                             onDone: { expandedRecordID = nil }
                         )
+                        .id(record.persistentModelID)
                     }
                 }
             }
@@ -86,6 +94,7 @@ struct RecordsView: View {
                                         onToggle: { toggle(record) },
                                         onDone: { expandedRecordID = nil }
                                     )
+                                    .id(record.persistentModelID)
                                 }
                             }
                         }
@@ -101,6 +110,16 @@ struct RecordsView: View {
                 expandedRecordID = nil
             } else {
                 expandedRecordID = record.persistentModelID
+            }
+        }
+    }
+
+    private func scrollToExpandedRecord(_ id: PersistentIdentifier?, using proxy: ScrollViewProxy) {
+        guard let id else { return }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) {
+            withAnimation(.easeInOut(duration: 0.32)) {
+                proxy.scrollTo(id, anchor: scrollAnchor)
             }
         }
     }
@@ -207,7 +226,7 @@ private struct RecordEntryCard: View {
             onDone()
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
             modelContext.delete(record)
             try? modelContext.save()
         }
