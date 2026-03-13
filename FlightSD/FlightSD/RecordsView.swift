@@ -50,6 +50,9 @@ struct RecordsView: View {
             .onPreferenceChange(RecordCardHeightPreferenceKey.self) { newValue in
                 scrollBridge.cardHeights = newValue
             }
+            .onPreferenceChange(RecordExpandedSectionHeightPreferenceKey.self) { newValue in
+                scrollBridge.expandedSectionHeights = newValue
+            }
             .safeAreaInset(edge: .bottom, spacing: 0) {
                 AddRecordBar {
                     appState.showNewRecord = true
@@ -74,7 +77,8 @@ struct RecordsView: View {
                             isExpanded: expandedRecordID == record.persistentModelID,
                             onToggle: { toggle(record, using: proxy) },
                             onTopDone: { finishEditing(record) },
-                            onBottomDone: { finishEditingAnchoringNext(after: record) }
+                            onBottomDone: { finishEditingAnchoredBelow(record) },
+                            onDeleteConfirmed: { prepareDeleteAnchoredBelow(record) }
                         )
                         .id(record.persistentModelID)
                         .background(alignment: .top) {
@@ -115,7 +119,8 @@ struct RecordsView: View {
                                         isExpanded: expandedRecordID == record.persistentModelID,
                                         onToggle: { toggle(record, using: proxy) },
                                         onTopDone: { finishEditing(record) },
-                                        onBottomDone: { finishEditingAnchoringNext(after: record) }
+                                        onBottomDone: { finishEditingAnchoredBelow(record) },
+                                        onDeleteConfirmed: { prepareDeleteAnchoredBelow(record) }
                                     )
                                     .id(record.persistentModelID)
                                     .background(alignment: .top) {
@@ -156,8 +161,20 @@ struct RecordsView: View {
         }
     }
 
-    private func finishEditingAnchoringNext(after record: Record) {
-        scrollBridge.startAnchoringCollapsingCard(recordID: record.persistentModelID, duration: 0.42)
+    private func finishEditingAnchoredBelow(_ record: Record) {
+        if let expandedHeight = scrollBridge.expandedSectionHeights[record.persistentModelID] {
+            scrollBridge.animateCompensation(distance: expandedHeight, duration: 0.42)
+        }
+
+        withAnimation(.spring(response: 0.28, dampingFraction: 0.84)) {
+            expandedRecordID = nil
+        }
+    }
+
+    private func prepareDeleteAnchoredBelow(_ record: Record) {
+        if let cardHeight = scrollBridge.cardHeights[record.persistentModelID] {
+            scrollBridge.animateCompensation(distance: cardHeight + 12, duration: 0.54)
+        }
 
         withAnimation(.spring(response: 0.28, dampingFraction: 0.84)) {
             expandedRecordID = nil
@@ -174,6 +191,14 @@ struct RecordsView: View {
 }
 
 private struct RecordCardHeightPreferenceKey: PreferenceKey {
+    static var defaultValue: [PersistentIdentifier: CGFloat] = [:]
+
+    static func reduce(value: inout [PersistentIdentifier: CGFloat], nextValue: () -> [PersistentIdentifier: CGFloat]) {
+        value.merge(nextValue(), uniquingKeysWith: { _, new in new })
+    }
+}
+
+private struct RecordExpandedSectionHeightPreferenceKey: PreferenceKey {
     static var defaultValue: [PersistentIdentifier: CGFloat] = [:]
 
     static func reduce(value: inout [PersistentIdentifier: CGFloat], nextValue: () -> [PersistentIdentifier: CGFloat]) {
@@ -227,26 +252,33 @@ private final class RecordsScrollBridge {
     weak var scrollView: UIScrollView? {
         didSet {
             captureBaseInsetsIfNeeded()
-            applyExtraTopInset(extraTopInset)
+            applyExtraTopInset(extraTopInset, preservingViewport: false)
         }
     }
     var cardHeights: [PersistentIdentifier: CGFloat] = [:]
+    var expandedSectionHeights: [PersistentIdentifier: CGFloat] = [:]
 
     private var anchorToken = UUID()
     private var baseContentInsetTop: CGFloat?
     private var baseIndicatorInsetTop: CGFloat?
     private var extraTopInset: CGFloat = 0
 
-    func startAnchoringCollapsingCard(recordID: PersistentIdentifier, duration: Double) {
-        guard let initialHeight = cardHeights[recordID] else { return }
-
+    func animateCompensation(distance: CGFloat, duration: Double) {
+        guard distance > 0 else { return }
         captureBaseInsetsIfNeeded()
-        applyExtraTopInset(max(extraTopInset, initialHeight))
+        applyExtraTopInset(max(extraTopInset, distance + 24))
+        guard let scrollView else { return }
 
         let token = UUID()
         anchorToken = token
         let startTime = CACurrentMediaTime()
-        var lastHeight = initialHeight
+        let startOffsetY = scrollView.contentOffset.y
+        let minOffsetY = -((baseContentInsetTop ?? scrollView.contentInset.top) + extraTopInset)
+        let maxOffsetY = max(
+            scrollView.contentSize.height - scrollView.bounds.height + scrollView.adjustedContentInset.bottom,
+            minOffsetY
+        )
+        let targetOffsetY = min(max(startOffsetY - distance, minOffsetY), maxOffsetY)
 
         func step() {
             guard self.anchorToken == token else { return }
@@ -266,18 +298,9 @@ private final class RecordsScrollBridge {
                 return
             }
 
-            let currentHeight = self.cardHeights[recordID] ?? 0
-            let delta = currentHeight - lastHeight
-            lastHeight = currentHeight
-
-            guard abs(delta) > 0.5 else { return }
-
-            let minOffsetY = -((self.baseContentInsetTop ?? scrollView.contentInset.top) + self.extraTopInset)
-            let maxOffsetY = max(
-                scrollView.contentSize.height - scrollView.bounds.height + scrollView.adjustedContentInset.bottom,
-                minOffsetY
-            )
-            let adjustedOffsetY = min(max(scrollView.contentOffset.y - delta, minOffsetY), maxOffsetY)
+            let elapsed = min(max((CACurrentMediaTime() - startTime) / duration, 0), 1)
+            let progress = 1 - pow(1 - elapsed, 3)
+            let adjustedOffsetY = startOffsetY + (targetOffsetY - startOffsetY) * progress
 
             scrollView.setContentOffset(CGPoint(x: scrollView.contentOffset.x, y: adjustedOffsetY), animated: false)
         }
@@ -295,15 +318,16 @@ private final class RecordsScrollBridge {
         }
     }
 
-    private func applyExtraTopInset(_ extra: CGFloat) {
+    private func applyExtraTopInset(_ extra: CGFloat, preservingViewport: Bool = true) {
         guard let scrollView else {
-            extraTopInset = extra
+            extraTopInset = max(extra, 0)
             return
         }
 
         captureBaseInsetsIfNeeded()
 
         let clampedExtra = max(extra, 0)
+        let delta = clampedExtra - extraTopInset
         extraTopInset = clampedExtra
 
         var contentInset = scrollView.contentInset
@@ -313,6 +337,17 @@ private final class RecordsScrollBridge {
         var indicatorInsets = scrollView.verticalScrollIndicatorInsets
         indicatorInsets.top = (baseIndicatorInsetTop ?? indicatorInsets.top) + clampedExtra
         scrollView.verticalScrollIndicatorInsets = indicatorInsets
+
+        guard preservingViewport, abs(delta) > 0.5 else { return }
+
+        let minOffsetY = -((baseContentInsetTop ?? contentInset.top) + clampedExtra)
+        let maxOffsetY = max(
+            scrollView.contentSize.height - scrollView.bounds.height + scrollView.adjustedContentInset.bottom,
+            minOffsetY
+        )
+        let adjustedOffsetY = min(max(scrollView.contentOffset.y - delta, minOffsetY), maxOffsetY)
+
+        scrollView.setContentOffset(CGPoint(x: scrollView.contentOffset.x, y: adjustedOffsetY), animated: false)
     }
 
     private func settleTopInset() {
@@ -329,6 +364,7 @@ private struct RecordEntryCard: View {
     let onToggle: () -> Void
     let onTopDone: () -> Void
     let onBottomDone: () -> Void
+    let onDeleteConfirmed: () -> Void
 
     @Environment(\.modelContext) private var modelContext
     @State private var draft: RecordDraft
@@ -336,12 +372,13 @@ private struct RecordEntryCard: View {
 
     private let cardCornerRadius: CGFloat = 14
 
-    init(record: Record, isExpanded: Bool, onToggle: @escaping () -> Void, onTopDone: @escaping () -> Void, onBottomDone: @escaping () -> Void) {
+    init(record: Record, isExpanded: Bool, onToggle: @escaping () -> Void, onTopDone: @escaping () -> Void, onBottomDone: @escaping () -> Void, onDeleteConfirmed: @escaping () -> Void) {
         self.record = record
         self.isExpanded = isExpanded
         self.onToggle = onToggle
         self.onTopDone = onTopDone
         self.onBottomDone = onBottomDone
+        self.onDeleteConfirmed = onDeleteConfirmed
         _draft = State(initialValue: RecordDraft(record: record))
     }
 
@@ -368,6 +405,15 @@ private struct RecordEntryCard: View {
                         saveChanges(scrollsToNextRecord: true)
                     } onDelete: {
                         showDeleteConfirmation = true
+                    }
+                }
+                .background {
+                    GeometryReader { geometry in
+                        Color.clear
+                            .preference(
+                                key: RecordExpandedSectionHeightPreferenceKey.self,
+                                value: [record.persistentModelID: geometry.size.height]
+                            )
                     }
                 }
                 .clipped()
@@ -428,7 +474,7 @@ private struct RecordEntryCard: View {
     }
 
     private func deleteRecord() {
-        onBottomDone()
+        onDeleteConfirmed()
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
             modelContext.delete(record)
