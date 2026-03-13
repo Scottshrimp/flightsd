@@ -399,6 +399,17 @@ private struct RecordInlineEditor: View {
     let onBottomDone: () -> Void
     let onDelete: () -> Void
 
+    private var preciseDensityToggleBinding: Binding<Bool> {
+        Binding(
+            get: { draft.usePreciseDensity },
+            set: { newValue in
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    draft.usePreciseDensity = newValue
+                }
+            }
+        )
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             EditorBlock(title: "记录时间") {
@@ -497,19 +508,54 @@ private struct RecordInlineEditor: View {
 
             EditorBlock(title: "质量") {
                 VStack(alignment: .leading, spacing: 12) {
-                    TextField("克数", text: $draft.massText)
-                        .textFieldStyle(.roundedBorder)
+                    GeometryReader { geometry in
+                        let compactFieldWidth = geometry.size.width / 5
 
-                    Toggle("精确密度", isOn: $draft.usePreciseDensity)
+                        HStack(alignment: .top, spacing: 12) {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("质量")
+                                    .font(.subheadline.weight(.semibold))
 
-                    if draft.usePreciseDensity {
-                        TextField("密度", text: $draft.preciseDensityText)
-                            .textFieldStyle(.roundedBorder)
+                                TextField("克数", text: $draft.massText)
+                                    .keyboardType(.decimalPad)
+                                    .textFieldStyle(.roundedBorder)
+                                    .frame(width: compactFieldWidth)
+                            }
+
+                            if draft.usePreciseDensity {
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text("密度")
+                                        .font(.subheadline.weight(.semibold))
+
+                                    TextField("密度", text: $draft.preciseDensityText)
+                                        .keyboardType(.decimalPad)
+                                        .textFieldStyle(.roundedBorder)
+                                        .frame(width: compactFieldWidth)
+                                }
+                                .transition(.opacity)
+                            }
+
+                            Spacer(minLength: 0)
+                        }
                     }
+                    .frame(height: 62)
 
-                    Text("估算体积 \(draft.estimatedVolumeText)")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    Toggle("精确密度", isOn: preciseDensityToggleBinding)
+                        .font(.subheadline)
+
+                    HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("估算体积")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+
+                            Text(draft.estimatedVolumeText)
+                                .font(.headline)
+                                .foregroundStyle(.primary)
+                        }
+
+                        Spacer()
+                    }
 
                     if !draft.canSave {
                         Text("质量或密度格式无效，暂时无法保存。")

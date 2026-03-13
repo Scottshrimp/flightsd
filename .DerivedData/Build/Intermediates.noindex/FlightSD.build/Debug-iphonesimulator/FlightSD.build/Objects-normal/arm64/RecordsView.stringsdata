@@ -39,15 +39,7 @@
         "key": "记录时间",
         "location": {
           "startingColumn": 25,
-          "startingLine": 407
-        }
-      },
-      {
-        "comment": "",
-        "key": "估算体积 %@",
-        "location": {
-          "startingColumn": 26,
-          "startingLine": 510
+          "startingLine": 418
         }
       },
       {
@@ -55,15 +47,7 @@
         "key": "质量或密度格式无效，暂时无法保存。",
         "location": {
           "startingColumn": 30,
-          "startingLine": 515
-        }
-      },
-      {
-        "comment": "",
-        "key": "克数",
-        "location": {
-          "startingColumn": 31,
-          "startingLine": 500
+          "startingLine": 561
         }
       },
       {
@@ -71,15 +55,47 @@
         "key": "精确密度",
         "location": {
           "startingColumn": 28,
-          "startingLine": 503
+          "startingLine": 543
+        }
+      },
+      {
+        "comment": "",
+        "key": "质量",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 516
+        }
+      },
+      {
+        "comment": "",
+        "key": "克数",
+        "location": {
+          "startingColumn": 43,
+          "startingLine": 519
         }
       },
       {
         "comment": "",
         "key": "密度",
         "location": {
-          "startingColumn": 35,
-          "startingLine": 506
+          "startingColumn": 42,
+          "startingLine": 527
+        }
+      },
+      {
+        "comment": "",
+        "key": "密度",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 530
+        }
+      },
+      {
+        "comment": "",
+        "key": "估算体积",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 548
         }
       },
       {
@@ -87,7 +103,7 @@
         "key": "Add Record",
         "location": {
           "startingColumn": 22,
-          "startingLine": 643
+          "startingLine": 689
         }
       }
     ]
