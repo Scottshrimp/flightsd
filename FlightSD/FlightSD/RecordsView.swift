@@ -30,7 +30,9 @@ struct RecordsView: View {
     private let filterButtonTrailingPadding: CGFloat = 14
 
     private var filteredRecords: [Record] {
-        records.filter { appliedFilter.matches($0) }
+        records
+            .filter { appliedFilter.matches($0) }
+            .sorted { RecordPresentation.sortDate(for: $0) > RecordPresentation.sortDate(for: $1) }
     }
 
     private var groupedRecords: RecordGroups {
@@ -537,7 +539,7 @@ private struct RecordEntryCard: View {
                 deleteRecord()
             }
         } message: {
-            Text(RecordPresentation.deletePromptTimestamp(record.timestamp))
+            Text(RecordPresentation.deletePromptTimestamp(for: record))
         }
     }
 
@@ -545,6 +547,7 @@ private struct RecordEntryCard: View {
         guard draft.canSave else { return }
 
         record.timestamp = draft.timestamp
+        record.exactTime = draft.exactTime
         record.dimension = draft.dimension
         record.mediaType = draft.mediaType
         record.typeAge = draft.typeAge
@@ -607,11 +610,21 @@ private extension AnyTransition {
 private struct RecordSummaryRow: View {
     let record: Record
 
+    private var exactTime: Date? {
+        RecordPresentation.exactTime(for: record)
+    }
+
+    private var leadingDots: [MetricDot] {
+        RecordPresentation.leadingMetricDots(for: record)
+    }
+
     var body: some View {
         HStack(alignment: .center, spacing: 12) {
-            TimestampLine(timestamp: record.timestamp)
+            TimestampLine(record: record, inlineMetrics: exactTime == nil ? leadingDots : [])
 
-            MetricDotStrip(metrics: RecordPresentation.leadingMetricDots(for: record))
+            if exactTime != nil {
+                MetricDotStrip(metrics: leadingDots)
+            }
 
             Spacer(minLength: 8)
 
@@ -641,19 +654,26 @@ private struct RecordSummaryRow: View {
 }
 
 private struct TimestampLine: View {
-    let timestamp: Date
+    let record: Record
+    var inlineMetrics: [MetricDot] = []
 
     var body: some View {
         HStack(spacing: 6) {
-            if let dateText = RecordPresentation.dateText(for: timestamp) {
+            if let dateText = RecordPresentation.summaryDateText(for: record) {
                 Text(dateText)
                     .font(.caption.weight(.medium))
                     .foregroundStyle(.secondary)
             }
 
-            Text(RecordPresentation.timeText(for: timestamp))
-                .font(.footnote.weight(.semibold))
-                .foregroundStyle(.primary)
+            if let timeText = RecordPresentation.summaryTimeText(for: record) {
+                Text(timeText)
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(.primary)
+            }
+
+            if !inlineMetrics.isEmpty {
+                MetricDotStrip(metrics: inlineMetrics)
+            }
         }
         .lineLimit(1)
         .layoutPriority(0)
@@ -666,6 +686,7 @@ private struct RecordInlineEditor: View {
     let onTopDone: () -> Void
     let onBottomDone: () -> Void
     let onDelete: () -> Void
+    @State private var isExactTimePickerPresented = false
 
     private var preciseDensityToggleBinding: Binding<Bool> {
         Binding(
@@ -678,21 +699,56 @@ private struct RecordInlineEditor: View {
         )
     }
 
+    private var recordDateBinding: Binding<Date> {
+        Binding(
+            get: { draft.timestamp },
+            set: { newValue in
+                draft.setDate(newValue)
+            }
+        )
+    }
+
+    private var timePickerSeed: Date {
+        draft.displayedExactTime
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             EditorBlock(title: "Record Time") {
-                HStack(alignment: .center, spacing: 12) {
-                    DatePicker(
-                        "Record Time",
-                        selection: $draft.timestamp,
-                        displayedComponents: [.date, .hourAndMinute]
-                    )
-                    .labelsHidden()
+                VStack(alignment: .leading, spacing: 24) {
+                    HStack(alignment: .center, spacing: 12) {
+                        DatePicker(
+                            "Record Date",
+                            selection: recordDateBinding,
+                            displayedComponents: [.date]
+                        )
+                        .labelsHidden()
 
-                    Spacer(minLength: 12)
+                        OptionalTimeFieldButton(
+                            time: draft.exactTime,
+                            placeholder: ""
+                        ) {
+                            isExactTimePickerPresented = true
+                        }
 
-                    EditorActionButton(title: "Done", variant: .prominent, isDisabled: !draft.canSave) {
-                        onTopDone()
+                        Button {
+                            draft.clearExactTime()
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(draft.exactTime == nil ? Color.secondary.opacity(0.5) : Color.secondary)
+                        }
+                        .buttonStyle(.plain)
+
+                        Spacer(minLength: 0)
+                    }
+
+                    HStack {
+                        Spacer(minLength: 0)
+
+                        EditorActionButton(title: "Done", variant: .prominent, isDisabled: !draft.canSave) {
+                            onTopDone()
+                        }
                     }
                 }
             }
@@ -857,6 +913,11 @@ private struct RecordInlineEditor: View {
         .padding(.vertical, 18)
         .onDisappear {
             isSliderDragging = false
+        }
+        .sheet(isPresented: $isExactTimePickerPresented) {
+            TimeSelectionSheet(title: "Time", initialTime: timePickerSeed) { selectedTime in
+                draft.setExactTime(selectedTime)
+            }
         }
     }
 }
@@ -1445,11 +1506,13 @@ private struct RecordGroups {
         var monthBuckets: [Date: [Record]] = [:]
 
         for record in records {
-            if calendar.isDate(record.timestamp, inSameDayAs: startOfToday) {
+            let recordDate = normalizedRecordDate(record.timestamp, calendar: calendar)
+
+            if calendar.isDate(recordDate, inSameDayAs: startOfToday) {
                 todayRecords.append(record)
-            } else if record.timestamp >= startOfPastWeek && record.timestamp < startOfToday {
+            } else if recordDate >= startOfPastWeek && recordDate < startOfToday {
                 pastWeekRecords.append(record)
-            } else if let monthStart = calendar.dateInterval(of: .month, for: record.timestamp)?.start {
+            } else if let monthStart = calendar.dateInterval(of: .month, for: recordDate)?.start {
                 monthBuckets[monthStart, default: []].append(record)
             }
         }
@@ -1462,7 +1525,9 @@ private struct RecordGroups {
             .map { monthStart in
                 MonthGroup(
                     monthStart: monthStart,
-                    records: monthBuckets[monthStart]?.sorted(by: { $0.timestamp > $1.timestamp }) ?? []
+                    records: monthBuckets[monthStart]?.sorted(by: {
+                        RecordPresentation.sortDate(for: $0) > RecordPresentation.sortDate(for: $1)
+                    }) ?? []
                 )
             }
     }
@@ -1482,6 +1547,7 @@ private struct MetricDot {
 
 private struct RecordDraft {
     var timestamp: Date
+    var exactTime: Date?
     var dimension: Dimension?
     var mediaType: MediaType?
     var typeAge: Double?
@@ -1497,7 +1563,8 @@ private struct RecordDraft {
     var preciseDensityText: String
 
     init(record: Record) {
-        timestamp = record.timestamp
+        timestamp = normalizedRecordDate(record.timestamp)
+        exactTime = record.exactTime ?? (recordHasClockTime(record.timestamp) ? record.timestamp : nil)
         dimension = record.dimension
         mediaType = record.mediaType
         typeAge = record.typeAge
@@ -1515,6 +1582,10 @@ private struct RecordDraft {
         preciseDensityText = record.preciseDensity.map {
             RecordPresentation.numberText($0, maxFractionDigits: 3)
         } ?? ""
+    }
+
+    var displayedExactTime: Date {
+        exactTime ?? combinedRecordDate(timestamp, time: .now)
     }
 
     var availableMediaTypes: [MediaType] {
@@ -1546,6 +1617,21 @@ private struct RecordDraft {
         let density = preciseDensityValue ?? 1.035
         let estVol = massValue / density
         return "\(RecordPresentation.fixedNumberText(estVol, fractionDigits: 2)) mL"
+    }
+
+    mutating func setDate(_ newValue: Date) {
+        timestamp = normalizedRecordDate(newValue)
+        if let exactTime {
+            self.exactTime = combinedRecordDate(timestamp, time: exactTime)
+        }
+    }
+
+    mutating func setExactTime(_ newValue: Date) {
+        exactTime = combinedRecordDate(timestamp, time: newValue)
+    }
+
+    mutating func clearExactTime() {
+        exactTime = nil
     }
 
     private func parsedOptionalNumber(from text: String) -> Double? {
@@ -1598,6 +1684,13 @@ private enum RecordPresentation {
         return formatter
     }()
 
+    private static let deletePromptDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter
+    }()
+
     static func monthTitle(_ date: Date) -> String {
         monthFormatter.string(from: date)
     }
@@ -1637,7 +1730,24 @@ private enum RecordPresentation {
         }
     }
 
-    static func dateText(for date: Date) -> String? {
+    static func recordDate(for record: Record) -> Date {
+        normalizedRecordDate(record.timestamp)
+    }
+
+    static func exactTime(for record: Record) -> Date? {
+        record.exactTime ?? (recordHasClockTime(record.timestamp) ? record.timestamp : nil)
+    }
+
+    static func sortDate(for record: Record) -> Date {
+        exactTime(for: record) ?? recordDate(for: record)
+    }
+
+    static func summaryDateText(for record: Record) -> String? {
+        let date = recordDate(for: record)
+        guard exactTime(for: record) != nil else {
+            return dateFormatter.string(from: date)
+        }
+
         let calendar = Calendar.current
         guard !calendar.isDateInToday(date) else {
             return nil
@@ -1645,12 +1755,16 @@ private enum RecordPresentation {
         return dateFormatter.string(from: date)
     }
 
-    static func timeText(for date: Date) -> String {
-        timeFormatter.string(from: date)
+    static func summaryTimeText(for record: Record) -> String? {
+        guard let exactTime = exactTime(for: record) else { return nil }
+        return timeFormatter.string(from: exactTime)
     }
 
-    static func deletePromptTimestamp(_ date: Date) -> String {
-        deletePromptFormatter.string(from: date)
+    static func deletePromptTimestamp(for record: Record) -> String {
+        if let exactTime = exactTime(for: record) {
+            return deletePromptFormatter.string(from: exactTime)
+        }
+        return deletePromptDateFormatter.string(from: recordDate(for: record))
     }
 
     static func metricSummary(for record: Record) -> String {

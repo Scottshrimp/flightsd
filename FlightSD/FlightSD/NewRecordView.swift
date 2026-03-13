@@ -9,6 +9,9 @@ struct NewRecordView: View {
 
     @State private var activeField: Int? = 0
     @State private var showIntroCard: Bool = false
+    @State private var recordDate: Date = normalizedRecordDate(.now)
+    @State private var exactTime: Date? = .now
+    @State private var isExactTimePickerPresented = false
 
     @State private var dimension: Dimension? = nil
     @State private var mediaType: MediaType? = nil
@@ -83,11 +86,30 @@ struct NewRecordView: View {
         )
     }
 
+    private var recordDateBinding: Binding<Date> {
+        Binding(
+            get: { recordDate },
+            set: { newValue in
+                let normalizedDate = normalizedRecordDate(newValue)
+                recordDate = normalizedDate
+                if let exactTime {
+                    self.exactTime = combinedRecordDate(normalizedDate, time: exactTime)
+                }
+            }
+        )
+    }
+
+    private var timePickerSeed: Date {
+        exactTime ?? combinedRecordDate(recordDate, time: .now)
+    }
+
     var body: some View {
         NavigationStack {
             ScrollViewReader { proxy in
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 24) {
+                        recordTimeCard
+
                         if showIntroCard {
                             headerCard
                         }
@@ -325,6 +347,52 @@ struct NewRecordView: View {
         .shadow(color: .black.opacity(0.04), radius: 12, y: 6)
     }
 
+    private var recordTimeCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .center, spacing: 12) {
+                DatePicker(
+                    "Date",
+                    selection: recordDateBinding,
+                    displayedComponents: [.date]
+                )
+                .labelsHidden()
+
+                OptionalTimeFieldButton(
+                    time: exactTime,
+                    placeholder: "",
+                    width: 96
+                ) {
+                    isExactTimePickerPresented = true
+                }
+
+                Spacer(minLength: 0)
+
+                Button("Clear Time") {
+                    exactTime = nil
+                }
+                .buttonStyle(.plain)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(exactTime == nil ? Color.secondary : Color.accentColor)
+            }
+        }
+        .padding(.horizontal, 18)
+        .padding(.vertical, 18)
+        .background {
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(.thinMaterial)
+        }
+        .overlay {
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
+        }
+        .shadow(color: .black.opacity(0.04), radius: 12, y: 6)
+        .sheet(isPresented: $isExactTimePickerPresented) {
+            TimeSelectionSheet(title: "Time", initialTime: timePickerSeed) { selectedTime in
+                exactTime = combinedRecordDate(recordDate, time: selectedTime)
+            }
+        }
+    }
+
     private var actionBar: some View {
         VStack(spacing: 0) {
             HStack(spacing: 10) {
@@ -482,6 +550,8 @@ struct NewRecordView: View {
 
     private func saveRecord() {
         let record = Record(
+            timestamp: recordDate,
+            exactTime: exactTime,
             dimension: dimension,
             mediaType: mediaType,
             typeAge: typeAge,

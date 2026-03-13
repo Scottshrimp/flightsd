@@ -16,6 +16,7 @@ enum MediaType: String, Codable {
 @Model
 class Record {
     var timestamp: Date
+    var exactTime: Date?
 
     var dimension: Dimension?
     var mediaType: MediaType?
@@ -46,6 +47,7 @@ class Record {
     // ⑨ 初始化函数：新建一条记录时，给所有字段赋初始值
     init(
         timestamp: Date = .now,
+        exactTime: Date? = nil,
         dimension: Dimension? = nil,
         mediaType: MediaType? = nil,
         typeAge: Double? = nil,
@@ -60,6 +62,7 @@ class Record {
         preciseDensity: Double? = nil
     ) {
         self.timestamp = timestamp
+        self.exactTime = exactTime
         self.dimension = dimension
         self.mediaType = mediaType
         self.typeAge = typeAge
@@ -73,7 +76,23 @@ class Record {
         self.mass = mass
         self.preciseDensity = preciseDensity
     }
-}//
+}
+
+func normalizedRecordDate(_ date: Date, calendar: Calendar = .current) -> Date {
+    calendar.startOfDay(for: date)
+}
+
+func combinedRecordDate(_ date: Date, time: Date, calendar: Calendar = .current) -> Date {
+    let day = normalizedRecordDate(date, calendar: calendar)
+    let timeComponents = calendar.dateComponents([.hour, .minute, .second], from: time)
+    return calendar.date(byAdding: timeComponents, to: day) ?? day
+}
+
+func recordHasClockTime(_ date: Date, calendar: Calendar = .current) -> Bool {
+    let components = calendar.dateComponents([.hour, .minute, .second], from: date)
+    return (components.hour ?? 0) != 0 || (components.minute ?? 0) != 0 || (components.second ?? 0) != 0
+}
+//
 //  Record.swift
 //  FlightSD
 //

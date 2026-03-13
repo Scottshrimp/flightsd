@@ -26,7 +26,7 @@ struct ContentView: View {
                     }
                 }
                 .tabItem {
-                    Label("记录", systemImage: "pencil")
+                    Label("Record", systemImage: "pencil")
                 }
                 .tag(0)
 
@@ -38,13 +38,13 @@ struct ContentView: View {
                     }
                 }
                 .tabItem {
-                    Label("趋势", systemImage: "arrow.up.arrow.down")
+                    Label("Trend", systemImage: "arrow.up.arrow.down")
                 }
                 .tag(1)
 
             StatsView()
                 .tabItem {
-                    Label("统计", systemImage: "chart.dots.scatter")
+                    Label("Stats", systemImage: "chart.dots.scatter")
                 }
                 .tag(2)
 
