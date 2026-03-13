@@ -1,5 +1,8 @@
 import SwiftUI
 import SwiftData
+#if canImport(UIKit)
+import UIKit
+#endif
 
 struct RecordsView: View {
     @Environment(AppState.self) private var appState
@@ -658,8 +661,13 @@ private struct EditorActionButtonStyle: ButtonStyle {
                     .strokeBorder(borderColor(isPressed: isPressed), lineWidth: variant == .destructive ? 1 : 0)
             }
             .foregroundStyle(foregroundColor)
+            .scaleEffect(isPressed ? 0.96 : 1)
             .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
             .animation(.easeOut(duration: 0.12), value: isPressed)
+            .onChange(of: isPressed) { _, pressed in
+                guard pressed else { return }
+                triggerImpact()
+            }
     }
 
     private func backgroundColor(isPressed: Bool) -> Color {
@@ -687,6 +695,12 @@ private struct EditorActionButtonStyle: ButtonStyle {
         case .destructive:
             return .red
         }
+    }
+
+    private func triggerImpact() {
+#if canImport(UIKit)
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+#endif
     }
 }
 
