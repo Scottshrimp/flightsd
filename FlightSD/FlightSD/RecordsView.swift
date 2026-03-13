@@ -337,7 +337,7 @@ private struct RecordInlineEditor: View {
                     Button("Done") {
                         onDone()
                     }
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(EditorActionButtonStyle(variant: .prominent))
                     .disabled(!draft.canSave)
                 }
             }
@@ -447,15 +447,14 @@ private struct RecordInlineEditor: View {
                 Button("Delete") {
                     onDelete()
                 }
-                .buttonStyle(.bordered)
-                .tint(.red)
+                .buttonStyle(EditorActionButtonStyle(variant: .destructive))
 
                 Spacer()
 
                 Button("Done") {
                     onDone()
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(EditorActionButtonStyle(variant: .prominent))
                 .disabled(!draft.canSave)
             }
         }
@@ -634,6 +633,59 @@ private struct EditorBlock<Content: View>: View {
                 .font(.subheadline.weight(.semibold))
 
             content()
+        }
+    }
+}
+
+private struct EditorActionButtonStyle: ButtonStyle {
+    enum Variant {
+        case prominent
+        case destructive
+    }
+
+    let variant: Variant
+
+    func makeBody(configuration: Configuration) -> some View {
+        let isPressed = configuration.isPressed
+
+        configuration.label
+            .font(.subheadline.weight(.semibold))
+            .padding(.horizontal, 14)
+            .padding(.vertical, 8)
+            .background(backgroundColor(isPressed: isPressed))
+            .overlay {
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .strokeBorder(borderColor(isPressed: isPressed), lineWidth: variant == .destructive ? 1 : 0)
+            }
+            .foregroundStyle(foregroundColor)
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .animation(.easeOut(duration: 0.12), value: isPressed)
+    }
+
+    private func backgroundColor(isPressed: Bool) -> Color {
+        switch variant {
+        case .prominent:
+            return Color.accentColor.opacity(isPressed ? 0.78 : 1)
+        case .destructive:
+            return Color.red.opacity(isPressed ? 0.18 : 0.10)
+        }
+    }
+
+    private func borderColor(isPressed: Bool) -> Color {
+        switch variant {
+        case .prominent:
+            return .clear
+        case .destructive:
+            return Color.red.opacity(isPressed ? 0.72 : 0.82)
+        }
+    }
+
+    private var foregroundColor: Color {
+        switch variant {
+        case .prominent:
+            return .white
+        case .destructive:
+            return .red
         }
     }
 }
