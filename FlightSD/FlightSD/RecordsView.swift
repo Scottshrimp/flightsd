@@ -317,9 +317,9 @@ private struct RecordsFilterSheet: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
-                    FilterSectionCard(title: "次元") {
+                    FilterSectionCard(title: "Dimension") {
                         LazyVGrid(columns: filterGridColumns, spacing: 12) {
-                            filterButton(title: "全部", isSelected: draftFilter.dimension == nil) {
+                            filterButton(title: "All", isSelected: draftFilter.dimension == nil) {
                                 draftFilter.dimension = nil
                             }
 
@@ -339,9 +339,9 @@ private struct RecordsFilterSheet: View {
                         }
                     }
 
-                    FilterSectionCard(title: "媒体类型") {
+                    FilterSectionCard(title: "Media Type") {
                         LazyVGrid(columns: filterGridColumns, spacing: 12) {
-                            filterButton(title: "全部", isSelected: draftFilter.mediaType == nil) {
+                            filterButton(title: "All", isSelected: draftFilter.mediaType == nil) {
                                 draftFilter.mediaType = nil
                             }
 
@@ -360,7 +360,7 @@ private struct RecordsFilterSheet: View {
                 .padding(.top, 20)
                 .padding(.bottom, 24)
             }
-            .navigationTitle("筛选记录")
+            .navigationTitle("Filter Records")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -531,7 +531,7 @@ private struct RecordEntryCard: View {
                 isSliderDragging = false
             }
         }
-        .alert("是否要删除记录", isPresented: $showDeleteConfirmation) {
+        .alert("Do you want to delete the record at", isPresented: $showDeleteConfirmation) {
             Button("Cancel", role: .cancel) {}
             Button("Confirm", role: .destructive) {
                 deleteRecord()
@@ -680,10 +680,10 @@ private struct RecordInlineEditor: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
-            EditorBlock(title: "记录时间") {
+            EditorBlock(title: "Record Time") {
                 HStack(alignment: .center, spacing: 12) {
                     DatePicker(
-                        "记录时间",
+                        "Record Time",
                         selection: $draft.timestamp,
                         displayedComponents: [.date, .hourAndMinute]
                     )
@@ -697,7 +697,7 @@ private struct RecordInlineEditor: View {
                 }
             }
 
-            EditorBlock(title: "次元") {
+            EditorBlock(title: "Dimension") {
                 HStack(spacing: 12) {
                     ForEach([Dimension.twoDimension, Dimension.threeDimension], id: \.self) { dimension in
                         Button(RecordPresentation.dimensionLabel(dimension)) {
@@ -713,7 +713,7 @@ private struct RecordInlineEditor: View {
                 }
             }
 
-            EditorBlock(title: "媒体类型") {
+            EditorBlock(title: "Media Type") {
                 HStack(spacing: 12) {
                     ForEach(draft.availableMediaTypes, id: \.self) { mediaType in
                         Button(RecordPresentation.mediaTypeLabel(mediaType)) {
@@ -725,35 +725,35 @@ private struct RecordInlineEditor: View {
             }
 
             MetricEditorRow(
-                title: "年龄感",
+                title: "Age",
                 value: $draft.typeAge,
                 labels: RecordPresentation.typeAgeLabels,
                 isSliderDragging: $isSliderDragging
             )
 
             MetricEditorRow(
-                title: "体位",
+                title: "Position",
                 value: $draft.typePosition,
                 labels: RecordPresentation.typePositionLabels,
                 isSliderDragging: $isSliderDragging
             )
 
             MetricEditorRow(
-                title: "存在感",
+                title: "Existence",
                 value: $draft.typeExistence,
                 labels: RecordPresentation.typeExistenceLabels,
                 isSliderDragging: $isSliderDragging
             )
 
             MetricEditorRow(
-                title: "时长",
+                title: "Time",
                 value: $draft.time,
                 labels: RecordPresentation.timeLabels,
                 isSliderDragging: $isSliderDragging
             )
 
             MetricEditorRow(
-                title: "声音",
+                title: "Audio",
                 value: $draft.sound,
                 labels: RecordPresentation.soundLabels,
                 range: -1 ... 1,
@@ -762,37 +762,37 @@ private struct RecordInlineEditor: View {
             )
 
             MetricEditorRow(
-                title: "氛围",
+                title: "Atm",
                 value: $draft.atm,
                 labels: RecordPresentation.atmLabels,
                 isSliderDragging: $isSliderDragging
             )
 
             MetricEditorRow(
-                title: "事后状态",
+                title: "Postnut",
                 value: $draft.postnut,
                 labels: RecordPresentation.postnutLabels,
                 isSliderDragging: $isSliderDragging
             )
 
             MetricEditorRow(
-                title: "欲望程度",
+                title: "Horny Level",
                 value: $draft.horny,
                 labels: RecordPresentation.hornyLabels,
                 isSliderDragging: $isSliderDragging
             )
 
-            EditorBlock(title: "质量") {
+            EditorBlock(title: "Mass") {
                 VStack(alignment: .leading, spacing: 12) {
                     GeometryReader { geometry in
                         let compactFieldWidth = geometry.size.width / 5
 
                         HStack(alignment: .top, spacing: 12) {
                             VStack(alignment: .leading, spacing: 8) {
-                                Text("质量")
+                                Text("Mass")
                                     .font(.subheadline.weight(.semibold))
 
-                                TextField("克数", text: $draft.massText)
+                                TextField("gram", text: $draft.massText)
                                     .keyboardType(.decimalPad)
                                     .textFieldStyle(.roundedBorder)
                                     .frame(width: compactFieldWidth)
@@ -800,10 +800,10 @@ private struct RecordInlineEditor: View {
 
                             if draft.usePreciseDensity {
                                 VStack(alignment: .leading, spacing: 8) {
-                                    Text("密度")
+                                    Text("Density")
                                         .font(.subheadline.weight(.semibold))
 
-                                    TextField("密度", text: $draft.preciseDensityText)
+                                    TextField("g/cm^3", text: $draft.preciseDensityText)
                                         .keyboardType(.decimalPad)
                                         .textFieldStyle(.roundedBorder)
                                         .frame(width: compactFieldWidth)
@@ -816,12 +816,12 @@ private struct RecordInlineEditor: View {
                     }
                     .frame(height: 62)
 
-                    Toggle("精确密度", isOn: preciseDensityToggleBinding)
+                    Toggle("Exact Density", isOn: preciseDensityToggleBinding)
                         .font(.subheadline)
 
                     HStack {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("估算体积")
+                            Text("est.Vol")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
 
@@ -834,7 +834,7 @@ private struct RecordInlineEditor: View {
                     }
 
                     if !draft.canSave {
-                        Text("质量或密度格式无效，暂时无法保存。")
+                        Text("Invalid value for Mass or Density, save failed.")
                             .font(.caption)
                             .foregroundStyle(.red)
                     }
@@ -921,7 +921,7 @@ private struct MetricEditorRow: View {
 
                 Spacer()
 
-                Text(currentZone.map { labels[$0] } ?? "未填写")
+                Text(currentZone.map { labels[$0] } ?? "Unspecified")
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(accentColor)
             }
@@ -1561,13 +1561,13 @@ private struct RecordDraft {
 }
 
 private enum RecordPresentation {
-    static let typeAgeLabels = ["区间1", "区间2", "区间3", "区间4", "区间5"]
-    static let typePositionLabels = ["区间1", "区间2", "区间3", "区间4", "区间5"]
-    static let typeExistenceLabels = ["区间1", "区间2"]
+    static let typeAgeLabels = ["萝莉", "妹妹系", "少女", "姐姐系", "妈妈系"]
+    static let typePositionLabels = ["完全被动", "被动", "中等", "主动", "完全主动"]
+    static let typeExistenceLabels = ["弱", "偏弱", "中等", "偏强", "强"]
     static let timeLabels = ["很短", "短", "中", "长", "很长"]
-    static let soundLabels = ["不喜欢", "纯图", "喜欢", "纯音"]
+    static let soundLabels = ["无声", "有声", "喜欢", "纯音"]
     static let atmLabels = ["纯视觉", "偏视觉", "偏情境", "纯情境"]
-    static let postnutLabels = ["很开心", "没感觉", "有点累", "眼皮打架"]
+    static let postnutLabels = ["很放松", "没感觉", "有点累", "眼皮打架"]
     static let hornyLabels = ["低", "中低", "中高", "高"]
 
     private static let monthFormatter: DateFormatter = {

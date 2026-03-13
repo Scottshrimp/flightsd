@@ -24,13 +24,13 @@ struct NewRecordView: View {
     @State private var usePreciseDensity: Bool = false
     @State private var preciseDensityInput: String = ""
 
-    private let typeAgeLabels = ["区间1", "区间2", "区间3", "区间4", "区间5"]
-    private let typePositionLabels = ["区间1", "区间2", "区间3", "区间4", "区间5"]
-    private let typeExistenceLabels = ["区间1", "区间2"]
+    private let typeAgeLabels = ["萝莉", "妹妹系", "少女", "姐姐系", "妈妈系"]
+    private let typePositionLabels = ["完全被动", "被动", "中等", "主动", "完全主动"]
+    private let typeExistenceLabels = ["弱", "偏弱", "中等", "偏强", "强"]
     private let timeLabels = ["很短", "短", "中", "长", "很长"]
-    private let soundLabels = ["不喜欢", "纯图", "喜欢", "纯音"]
+    private let soundLabels = ["无声", "有声", "喜欢", "纯音"]
     private let atmLabels = ["纯视觉", "偏视觉", "偏情境", "纯情境"]
-    private let postnutLabels = ["很开心", "没感觉", "有点累", "眼皮打架"]
+    private let postnutLabels = ["很放松", "没感觉", "有点累", "眼皮打架"]
     private let hornyLabels = ["低", "中低", "中高", "高"]
     private let scrollAnchor = UnitPoint(x: 0.5, y: 0.5)
 
@@ -95,7 +95,7 @@ struct NewRecordView: View {
                         VStack(spacing: 12) {
                             FieldRow(
                                 index: 0,
-                                title: "次元",
+                                title: "Dimension",
                                 activeField: $activeField,
                                 filledValue: activeField != 0 ? dimension.map(dimensionLabel) : nil
                             ) {
@@ -115,7 +115,7 @@ struct NewRecordView: View {
 
                             FieldRow(
                                 index: 1,
-                                title: "媒体类型",
+                                title: "Media Type",
                                 activeField: $activeField,
                                 filledValue: activeField != 1 ? mediaType.map(mediaTypeLabel) : nil
                             ) {
@@ -132,7 +132,7 @@ struct NewRecordView: View {
 
                             sliderRow(
                                 index: 2,
-                                title: "年龄感",
+                                title: "Age",
                                 value: Binding(get: { typeAge ?? 0.5 }, set: { typeAge = $0 }),
                                 filled: typeAge,
                                 labels: typeAgeLabels
@@ -141,7 +141,7 @@ struct NewRecordView: View {
 
                             sliderRow(
                                 index: 3,
-                                title: "体位",
+                                title: "Position",
                                 value: Binding(get: { typePosition ?? 0.5 }, set: { typePosition = $0 }),
                                 filled: typePosition,
                                 labels: typePositionLabels
@@ -150,7 +150,7 @@ struct NewRecordView: View {
 
                             sliderRow(
                                 index: 4,
-                                title: "存在感",
+                                title: "Existence",
                                 value: Binding(get: { typeExistence ?? 0.5 }, set: { typeExistence = $0 }),
                                 filled: typeExistence,
                                 labels: typeExistenceLabels
@@ -159,7 +159,7 @@ struct NewRecordView: View {
 
                             sliderRow(
                                 index: 5,
-                                title: "时长",
+                                title: "Time",
                                 value: Binding(get: { time ?? 0.5 }, set: { time = $0 }),
                                 filled: time,
                                 labels: timeLabels
@@ -168,7 +168,7 @@ struct NewRecordView: View {
 
                             sliderRow(
                                 index: 6,
-                                title: "声音",
+                                title: "Audio",
                                 value: Binding(get: { ((sound ?? 0.0) + 1) / 2 }, set: { sound = $0 * 2 - 1 }),
                                 filled: sound.map { ($0 + 1) / 2 },
                                 labels: soundLabels
@@ -177,7 +177,7 @@ struct NewRecordView: View {
 
                             sliderRow(
                                 index: 7,
-                                title: "氛围",
+                                title: "Atm",
                                 value: Binding(get: { atm ?? 0.5 }, set: { atm = $0 }),
                                 filled: atm,
                                 labels: atmLabels
@@ -186,7 +186,7 @@ struct NewRecordView: View {
 
                             sliderRow(
                                 index: 8,
-                                title: "事后状态",
+                                title: "Postnut",
                                 value: Binding(get: { postnut ?? 0.5 }, set: { postnut = $0 }),
                                 filled: postnut,
                                 labels: postnutLabels
@@ -195,7 +195,7 @@ struct NewRecordView: View {
 
                             sliderRow(
                                 index: 9,
-                                title: "欲望程度",
+                                title: "Horny Level",
                                 value: Binding(get: { horny ?? 0.5 }, set: { horny = $0 }),
                                 filled: horny,
                                 labels: hornyLabels
@@ -204,7 +204,7 @@ struct NewRecordView: View {
 
                             FieldRow(
                                 index: 10,
-                                title: "质量",
+                                title: "Mass",
                                 activeField: $activeField,
                                 filledValue: activeField != 10 ? massSummary : nil
                             ) {
@@ -214,10 +214,10 @@ struct NewRecordView: View {
 
                                         HStack(alignment: .top, spacing: 12) {
                                             VStack(alignment: .leading, spacing: 8) {
-                                                Text("质量")
+                                                Text("Mass")
                                                     .font(.subheadline.weight(.semibold))
 
-                                                TextField("克数", text: $mass)
+                                                TextField("gram", text: $mass)
                                                     .keyboardType(.decimalPad)
                                                     .textFieldStyle(.roundedBorder)
                                                     .frame(width: compactFieldWidth)
@@ -225,10 +225,10 @@ struct NewRecordView: View {
 
                                             if usePreciseDensity {
                                                 VStack(alignment: .leading, spacing: 8) {
-                                                    Text("密度")
+                                                    Text("Density")
                                                         .font(.subheadline.weight(.semibold))
 
-                                                    TextField("密度", text: $preciseDensityInput)
+                                                    TextField("g/cm^3", text: $preciseDensityInput)
                                                         .keyboardType(.decimalPad)
                                                         .textFieldStyle(.roundedBorder)
                                                         .frame(width: compactFieldWidth)
@@ -241,12 +241,12 @@ struct NewRecordView: View {
                                     }
                                     .frame(height: 62)
 
-                                    Toggle("精确密度", isOn: preciseDensityToggleBinding)
+                                    Toggle("Exact Density", isOn: preciseDensityToggleBinding)
                                         .font(.subheadline)
 
                                     HStack {
                                         VStack(alignment: .leading, spacing: 4) {
-                                            Text("估算体积")
+                                            Text("est.Vol")
                                                 .font(.caption)
                                                 .foregroundStyle(.secondary)
 
@@ -277,11 +277,11 @@ struct NewRecordView: View {
             .safeAreaInset(edge: .bottom, spacing: 0) {
                 actionBar
             }
-            .navigationTitle("新记录")
+            .navigationTitle("New Record")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("取消") {
+                    Button("Cancel") {
                         dismiss()
                     }
                 }
@@ -300,7 +300,7 @@ struct NewRecordView: View {
 
             if !mass.isEmpty {
                 HStack {
-                    Text("估算体积")
+                    Text("est.Vol")
                         .font(.caption)
                         .foregroundStyle(.secondary)
 
@@ -331,7 +331,7 @@ struct NewRecordView: View {
                 Button {
                     saveAndDismiss()
                 } label: {
-                    Text("完成")
+                    Text("Done")
                         .font(.headline.weight(.semibold))
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
@@ -358,11 +358,11 @@ struct NewRecordView: View {
                     }
                     .buttonStyle(.plain)
                     .contextMenu {
-                        Button("5 分钟后提醒") { saveAndDismiss(reminderMinutes: 5) }
-                        Button("15 分钟后提醒") { saveAndDismiss(reminderMinutes: 15) }
-                        Button("30 分钟后提醒") { saveAndDismiss(reminderMinutes: 30) }
-                        Button("1 小时后提醒") { saveAndDismiss(reminderMinutes: 60) }
                         Button("2 小时后提醒") { saveAndDismiss(reminderMinutes: 120) }
+                        Button("1 小时后提醒") { saveAndDismiss(reminderMinutes: 60) }
+                        Button("30 分钟后提醒") { saveAndDismiss(reminderMinutes: 30) }
+                        Button("15 分钟后提醒") { saveAndDismiss(reminderMinutes: 15) }
+                        Button("5 分钟后提醒") { saveAndDismiss(reminderMinutes: 5) }
                     }
                 }
             }
