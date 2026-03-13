@@ -278,7 +278,7 @@ private final class RecordsScrollBridge {
             scrollView.contentSize.height - scrollView.bounds.height + scrollView.adjustedContentInset.bottom,
             minOffsetY
         )
-        let targetOffsetY = min(max(startOffsetY + distance, minOffsetY), maxOffsetY)
+        let targetOffsetY = min(max(startOffsetY - distance, minOffsetY), maxOffsetY)
 
         func step() {
             guard self.anchorToken == token else { return }
