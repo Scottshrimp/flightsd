@@ -656,7 +656,7 @@ struct FieldRow<Content: View>: View {
             }
             .buttonStyle(.plain)
 
-            if isExpanded {
+            SlidingFieldExpansion(isExpanded: isExpanded) {
                 VStack(spacing: 0) {
                     Divider()
                         .padding(.horizontal, 18)
@@ -665,8 +665,6 @@ struct FieldRow<Content: View>: View {
                         .padding(.horizontal, 18)
                         .padding(.vertical, 18)
                 }
-                .clipped()
-                .transition(.newRecordVerticalReveal)
             }
         }
         .background {
@@ -682,32 +680,42 @@ struct FieldRow<Content: View>: View {
     }
 }
 
-private struct NewRecordVerticalRevealModifier: AnimatableModifier {
-    var progress: CGFloat
-    private let travel: CGFloat = 24
+private struct SlidingFieldExpansion<Content: View>: View {
+    let isExpanded: Bool
+    @ViewBuilder let content: () -> Content
 
-    var animatableData: CGFloat {
-        get { progress }
-        set { progress = newValue }
+    @State private var measuredHeight: CGFloat = 0
+
+    private var progress: CGFloat {
+        isExpanded ? 1 : 0
     }
 
-    func body(content: Content) -> some View {
-        content
-            .offset(y: (1 - progress) * -travel)
-            .mask(alignment: .top) {
-                Rectangle()
-                    .scaleEffect(x: 1, y: max(progress, 0.001), anchor: .top)
+    var body: some View {
+        content()
+            .background(
+                GeometryReader { proxy in
+                    Color.clear
+                        .preference(key: SlidingFieldExpansionHeightKey.self, value: proxy.size.height)
+                }
+            )
+            .onPreferenceChange(SlidingFieldExpansionHeightKey.self) { height in
+                measuredHeight = height
             }
+            .offset(y: (1 - progress) * -28)
+            .frame(height: measuredHeight * progress, alignment: .top)
+            .clipped()
             .opacity(progress)
+            .allowsHitTesting(isExpanded)
+            .accessibilityHidden(!isExpanded)
+            .animation(.spring(response: 0.32, dampingFraction: 0.82), value: isExpanded)
     }
 }
 
-private extension AnyTransition {
-    static var newRecordVerticalReveal: AnyTransition {
-        .modifier(
-            active: NewRecordVerticalRevealModifier(progress: 0),
-            identity: NewRecordVerticalRevealModifier(progress: 1)
-        )
+private struct SlidingFieldExpansionHeightKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
     }
 }
 
