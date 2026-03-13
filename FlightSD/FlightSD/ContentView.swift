@@ -20,12 +20,23 @@ struct ContentView: View {
         TabView(selection: $selectedTab) {
 
             RecordsView()
+                .safeAreaInset(edge: .bottom, spacing: 0) {
+                    AddRecordBar {
+                        appState.showNewRecord = true
+                    }
+                }
                 .tabItem {
                     Label("记录", systemImage: "pencil")
                 }
                 .tag(0)
 
             TrendView()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .safeAreaInset(edge: .bottom, spacing: 0) {
+                    AddRecordBar {
+                        appState.showNewRecord = true
+                    }
+                }
                 .tabItem {
                     Label("趋势", systemImage: "arrow.up.arrow.down")
                 }

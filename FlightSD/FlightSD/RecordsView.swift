@@ -8,13 +8,13 @@ import UIKit
 #endif
 
 struct RecordsView: View {
-    @Environment(AppState.self) private var appState
     @Query(sort: \Record.timestamp, order: .reverse) private var records: [Record]
 
     @State private var expandedRecordID: PersistentIdentifier?
     @State private var appliedFilter = RecordsFilter()
     @State private var draftFilter = RecordsFilter()
     @State private var isShowingFilterSheet = false
+    @State private var isInlineSliderDragging = false
     private let scrollAnchor = UnitPoint(x: 0.5, y: -0.03)
     private let recordListSpacing: CGFloat = 14
     private let sectionSpacing: CGFloat = 32
@@ -64,11 +64,7 @@ struct RecordsView: View {
                 .padding(.top, 24)
                 .padding(.bottom, 20)
             }
-            .safeAreaInset(edge: .bottom, spacing: 0) {
-                AddRecordBar {
-                    appState.showNewRecord = true
-                }
-            }
+            .scrollDisabled(isInlineSliderDragging)
             .sheet(isPresented: $isShowingFilterSheet) {
                 RecordsFilterSheet(
                     draftFilter: $draftFilter,
@@ -120,6 +116,7 @@ struct RecordsView: View {
                         RecordEntryCard(
                             record: record,
                             isExpanded: expandedRecordID == record.persistentModelID,
+                            isSliderDragging: $isInlineSliderDragging,
                             onToggle: { toggle(record, using: proxy) },
                             onTopDone: { finishEditing(record) },
                             onBottomDone: {
@@ -161,6 +158,7 @@ struct RecordsView: View {
                                     RecordEntryCard(
                                         record: record,
                                         isExpanded: expandedRecordID == record.persistentModelID,
+                                        isSliderDragging: $isInlineSliderDragging,
                                         onToggle: { toggle(record, using: proxy) },
                                         onTopDone: { finishEditing(record) },
                                         onBottomDone: {
@@ -456,6 +454,7 @@ private struct FilterSectionCard<Content: View>: View {
 private struct RecordEntryCard: View {
     let record: Record
     let isExpanded: Bool
+    @Binding var isSliderDragging: Bool
     let onToggle: () -> Void
     let onTopDone: () -> Void
     let onBottomDone: () -> Void
@@ -470,6 +469,7 @@ private struct RecordEntryCard: View {
     init(
         record: Record,
         isExpanded: Bool,
+        isSliderDragging: Binding<Bool>,
         onToggle: @escaping () -> Void,
         onTopDone: @escaping () -> Void,
         onBottomDone: @escaping () -> Void,
@@ -477,6 +477,7 @@ private struct RecordEntryCard: View {
     ) {
         self.record = record
         self.isExpanded = isExpanded
+        _isSliderDragging = isSliderDragging
         self.onToggle = onToggle
         self.onTopDone = onTopDone
         self.onBottomDone = onBottomDone
@@ -501,7 +502,7 @@ private struct RecordEntryCard: View {
                     Divider()
                         .padding(.horizontal, 18)
 
-                    RecordInlineEditor(draft: $draft) {
+                    RecordInlineEditor(draft: $draft, isSliderDragging: $isSliderDragging) {
                         saveChanges(scrollsToNextRecord: false)
                     } onBottomDone: {
                         saveChanges(scrollsToNextRecord: true)
@@ -526,6 +527,8 @@ private struct RecordEntryCard: View {
         .onChange(of: isExpanded) { _, expanded in
             if expanded {
                 draft = RecordDraft(record: record)
+            } else {
+                isSliderDragging = false
             }
         }
         .alert("是否要删除记录", isPresented: $showDeleteConfirmation) {
@@ -659,6 +662,7 @@ private struct TimestampLine: View {
 
 private struct RecordInlineEditor: View {
     @Binding var draft: RecordDraft
+    @Binding var isSliderDragging: Bool
     let onTopDone: () -> Void
     let onBottomDone: () -> Void
     let onDelete: () -> Void
@@ -723,25 +727,29 @@ private struct RecordInlineEditor: View {
             MetricEditorRow(
                 title: "年龄感",
                 value: $draft.typeAge,
-                labels: RecordPresentation.typeAgeLabels
+                labels: RecordPresentation.typeAgeLabels,
+                isSliderDragging: $isSliderDragging
             )
 
             MetricEditorRow(
                 title: "体位",
                 value: $draft.typePosition,
-                labels: RecordPresentation.typePositionLabels
+                labels: RecordPresentation.typePositionLabels,
+                isSliderDragging: $isSliderDragging
             )
 
             MetricEditorRow(
                 title: "存在感",
                 value: $draft.typeExistence,
-                labels: RecordPresentation.typeExistenceLabels
+                labels: RecordPresentation.typeExistenceLabels,
+                isSliderDragging: $isSliderDragging
             )
 
             MetricEditorRow(
                 title: "时长",
                 value: $draft.time,
-                labels: RecordPresentation.timeLabels
+                labels: RecordPresentation.timeLabels,
+                isSliderDragging: $isSliderDragging
             )
 
             MetricEditorRow(
@@ -749,25 +757,29 @@ private struct RecordInlineEditor: View {
                 value: $draft.sound,
                 labels: RecordPresentation.soundLabels,
                 range: -1 ... 1,
-                normalize: { ($0 + 1) / 2 }
+                normalize: { ($0 + 1) / 2 },
+                isSliderDragging: $isSliderDragging
             )
 
             MetricEditorRow(
                 title: "氛围",
                 value: $draft.atm,
-                labels: RecordPresentation.atmLabels
+                labels: RecordPresentation.atmLabels,
+                isSliderDragging: $isSliderDragging
             )
 
             MetricEditorRow(
                 title: "事后状态",
                 value: $draft.postnut,
-                labels: RecordPresentation.postnutLabels
+                labels: RecordPresentation.postnutLabels,
+                isSliderDragging: $isSliderDragging
             )
 
             MetricEditorRow(
                 title: "欲望程度",
                 value: $draft.horny,
-                labels: RecordPresentation.hornyLabels
+                labels: RecordPresentation.hornyLabels,
+                isSliderDragging: $isSliderDragging
             )
 
             EditorBlock(title: "质量") {
@@ -843,15 +855,28 @@ private struct RecordInlineEditor: View {
         }
         .padding(.horizontal, 18)
         .padding(.vertical, 18)
+        .onDisappear {
+            isSliderDragging = false
+        }
     }
 }
 
 private struct MetricEditorRow: View {
+    private enum DragIntent {
+        case horizontal
+        case vertical
+    }
+
     let title: String
     @Binding var value: Double?
     let labels: [String]
     var range: ClosedRange<Double> = 0 ... 1
     var normalize: (Double) -> Double = { $0 }
+    @Binding var isSliderDragging: Bool
+
+    @State private var lastZone: Int = -1
+    @State private var isDragging = false
+    @State private var dragIntent: DragIntent?
 
     private var midpointValue: Double {
         (range.lowerBound + range.upperBound) / 2
@@ -861,11 +886,31 @@ private struct MetricEditorRow: View {
         value.map { zoneIndex(for: normalize($0), zoneCount: labels.count) }
     }
 
-    private var sliderBinding: Binding<Double> {
-        Binding(
-            get: { value ?? midpointValue },
-            set: { value = $0 }
-        )
+    private var currentProgress: Double {
+        let rawValue = value ?? midpointValue
+        return min(max(normalize(rawValue), 0), 1)
+    }
+
+    private var accentColor: Color {
+        currentZone.map { zoneColor(for: $0, zoneCount: labels.count) } ?? Color.secondary
+    }
+
+    private func value(for progress: Double) -> Double {
+        range.lowerBound + progress * (range.upperBound - range.lowerBound)
+    }
+
+    private func updateSlider(at locationX: CGFloat, trackWidth: CGFloat) {
+        let progress = max(0, min(1, locationX / trackWidth))
+        let newValue = value(for: progress)
+        value = newValue
+
+        let zone = zoneIndex(for: progress, zoneCount: labels.count)
+        if zone != lastZone {
+#if canImport(UIKit)
+            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+#endif
+            lastZone = zone
+        }
     }
 
     var body: some View {
@@ -878,11 +923,94 @@ private struct MetricEditorRow: View {
 
                 Text(currentZone.map { labels[$0] } ?? "未填写")
                     .font(.caption.weight(.semibold))
-                    .foregroundStyle(currentZone.map { zoneColor(for: $0, zoneCount: labels.count) } ?? Color.secondary)
+                    .foregroundStyle(accentColor)
             }
 
-            Slider(value: sliderBinding, in: range)
-                .tint(currentZone.map { zoneColor(for: $0, zoneCount: labels.count) } ?? Color.secondary.opacity(0.55))
+            GeometryReader { geometry in
+                let trackWidth = geometry.size.width
+                let filledWidth = max(0, min(trackWidth, currentProgress * trackWidth))
+                let boundaryCount = max(labels.count - 1, 0)
+
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 11, style: .continuous)
+                        .fill(Color.secondary.opacity(0.14))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 11, style: .continuous)
+                                .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
+                        }
+                        .frame(height: 14)
+
+                    Rectangle()
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    accentColor.opacity(isDragging ? 0.92 : 0.82),
+                                    accentColor
+                                ],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .frame(width: filledWidth, height: 14)
+                        .animation(.easeInOut(duration: 0.12), value: isDragging)
+
+                    if boundaryCount > 0 {
+                        ForEach(1 ... boundaryCount, id: \.self) { boundary in
+                            Rectangle()
+                                .fill(Color.primary.opacity(0.18))
+                                .frame(width: 1, height: 14)
+                                .offset(x: trackWidth * CGFloat(boundary) / CGFloat(labels.count) - 0.5)
+                        }
+                    }
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 11, style: .continuous))
+                .frame(height: 36)
+                .contentShape(Rectangle())
+                .simultaneousGesture(
+                    DragGesture(minimumDistance: 0, coordinateSpace: .local)
+                        .onChanged { drag in
+                            if dragIntent == nil {
+                                let horizontalDistance = abs(drag.translation.width)
+                                let verticalDistance = abs(drag.translation.height)
+
+                                if horizontalDistance > 4 || verticalDistance > 4 {
+                                    dragIntent = horizontalDistance >= verticalDistance ? .horizontal : .vertical
+                                } else {
+                                    return
+                                }
+                            }
+
+                            guard dragIntent == .horizontal else {
+                                isSliderDragging = false
+                                return
+                            }
+                            if !isDragging {
+                                isDragging = true
+                                isSliderDragging = true
+                            }
+                            updateSlider(at: drag.location.x, trackWidth: trackWidth)
+                        }
+                        .onEnded { drag in
+                            defer {
+                                dragIntent = nil
+                                isDragging = false
+                                isSliderDragging = false
+                            }
+
+                            guard dragIntent != .vertical else { return }
+                            updateSlider(at: drag.location.x, trackWidth: trackWidth)
+#if canImport(UIKit)
+                            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+#endif
+                        }
+                )
+            }
+            .frame(height: 36)
+            .onDisappear {
+                dragIntent = nil
+                isDragging = false
+                isSliderDragging = false
+            }
 
             HStack(spacing: 0) {
                 ForEach(labels.indices, id: \.self) { index in
@@ -919,7 +1047,7 @@ private struct MetricDotStrip: View {
     }
 }
 
-private struct AddRecordBar: View {
+struct AddRecordBar: View {
     @Environment(\.colorScheme) private var colorScheme
 
     let action: () -> Void
