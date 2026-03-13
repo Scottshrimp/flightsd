@@ -19,6 +19,7 @@ struct RecordsView: View {
     private let monthGroupSpacing: CGFloat = 24
     private let contentHorizontalPadding: CGFloat = 10
     private let bigTitleLeadingPadding: CGFloat = 8
+    private let recordCardHorizontalInset: CGFloat = 8
     private let bigTitleFontSize: CGFloat = 34
     private let monthTitleFontSize: CGFloat = 25
 
@@ -69,6 +70,7 @@ struct RecordsView: View {
 
             if records.isEmpty {
                 EmptySectionCard(message: emptyText)
+                    .padding(.horizontal, recordCardHorizontalInset)
             } else {
                 VStack(spacing: recordListSpacing) {
                     ForEach(records) { record in
@@ -87,6 +89,7 @@ struct RecordsView: View {
                         .id(record.persistentModelID)
                     }
                 }
+                .padding(.horizontal, recordCardHorizontalInset)
             }
         }
     }
@@ -100,6 +103,7 @@ struct RecordsView: View {
 
             if groupedRecords.earlierMonths.isEmpty {
                 EmptySectionCard(message: "还没有更久之前的记录")
+                    .padding(.horizontal, recordCardHorizontalInset)
             } else {
                 VStack(alignment: .leading, spacing: monthGroupSpacing) {
                     ForEach(groupedRecords.earlierMonths) { monthGroup in
@@ -125,6 +129,7 @@ struct RecordsView: View {
                                     .id(record.persistentModelID)
                                 }
                             }
+                            .padding(.horizontal, recordCardHorizontalInset)
                         }
                     }
                 }
