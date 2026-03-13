@@ -32,6 +32,7 @@ struct NewRecordView: View {
     private let atmLabels = ["纯视觉", "偏视觉", "偏情境", "纯情境"]
     private let postnutLabels = ["很开心", "没感觉", "有点累", "眼皮打架"]
     private let hornyLabels = ["低", "中低", "中高", "高"]
+    private let scrollAnchor = UnitPoint(x: 0.5, y: 0.68)
 
     private var filledStatus: [Bool] {
         [
@@ -66,176 +67,193 @@ struct NewRecordView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                LazyVStack(alignment: .leading, spacing: 24) {
-                    if showIntroCard {
-                        headerCard
-                    }
+            ScrollViewReader { proxy in
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 24) {
+                        if showIntroCard {
+                            headerCard
+                        }
 
-                    Text("填写细节")
-                        .font(.system(.title2, design: .rounded).weight(.bold))
-
-                    VStack(spacing: 12) {
-                        FieldRow(
-                            index: 0,
-                            title: "次元",
-                            activeField: $activeField,
-                            filledValue: activeField != 0 ? dimension.map(dimensionLabel) : nil
-                        ) {
-                            selectionGrid(
-                                options: [Dimension.twoDimension, .threeDimension],
-                                label: dimensionLabel,
-                                selection: dimension
-                            ) { selected in
-                                dimension = selected
-                                if selected == .threeDimension && (mediaType == .txt || mediaType == .aud) {
-                                    mediaType = nil
+                        VStack(spacing: 12) {
+                            FieldRow(
+                                index: 0,
+                                title: "次元",
+                                activeField: $activeField,
+                                filledValue: activeField != 0 ? dimension.map(dimensionLabel) : nil
+                            ) {
+                                selectionGrid(
+                                    options: [Dimension.twoDimension, .threeDimension],
+                                    label: dimensionLabel,
+                                    selection: dimension
+                                ) { selected in
+                                    dimension = selected
+                                    if selected == .threeDimension && (mediaType == .txt || mediaType == .aud) {
+                                        mediaType = nil
+                                    }
+                                    advance(from: 0)
                                 }
-                                advance(from: 0)
                             }
-                        }
+                            .id(fieldScrollID(0))
 
-                        FieldRow(
-                            index: 1,
-                            title: "媒体类型",
-                            activeField: $activeField,
-                            filledValue: activeField != 1 ? mediaType.map(mediaTypeLabel) : nil
-                        ) {
-                            selectionGrid(
-                                options: availableMediaTypes,
-                                label: mediaTypeLabel,
-                                selection: mediaType
-                            ) { selected in
-                                mediaType = selected
-                                advance(from: 1)
+                            FieldRow(
+                                index: 1,
+                                title: "媒体类型",
+                                activeField: $activeField,
+                                filledValue: activeField != 1 ? mediaType.map(mediaTypeLabel) : nil
+                            ) {
+                                selectionGrid(
+                                    options: availableMediaTypes,
+                                    label: mediaTypeLabel,
+                                    selection: mediaType
+                                ) { selected in
+                                    mediaType = selected
+                                    advance(from: 1)
+                                }
                             }
-                        }
+                            .id(fieldScrollID(1))
 
-                        sliderRow(
-                            index: 2,
-                            title: "年龄感",
-                            value: Binding(get: { typeAge ?? 0.5 }, set: { typeAge = $0 }),
-                            filled: typeAge,
-                            labels: typeAgeLabels
-                        )
+                            sliderRow(
+                                index: 2,
+                                title: "年龄感",
+                                value: Binding(get: { typeAge ?? 0.5 }, set: { typeAge = $0 }),
+                                filled: typeAge,
+                                labels: typeAgeLabels
+                            )
+                            .id(fieldScrollID(2))
 
-                        sliderRow(
-                            index: 3,
-                            title: "体位",
-                            value: Binding(get: { typePosition ?? 0.5 }, set: { typePosition = $0 }),
-                            filled: typePosition,
-                            labels: typePositionLabels
-                        )
+                            sliderRow(
+                                index: 3,
+                                title: "体位",
+                                value: Binding(get: { typePosition ?? 0.5 }, set: { typePosition = $0 }),
+                                filled: typePosition,
+                                labels: typePositionLabels
+                            )
+                            .id(fieldScrollID(3))
 
-                        sliderRow(
-                            index: 4,
-                            title: "存在感",
-                            value: Binding(get: { typeExistence ?? 0.5 }, set: { typeExistence = $0 }),
-                            filled: typeExistence,
-                            labels: typeExistenceLabels
-                        )
+                            sliderRow(
+                                index: 4,
+                                title: "存在感",
+                                value: Binding(get: { typeExistence ?? 0.5 }, set: { typeExistence = $0 }),
+                                filled: typeExistence,
+                                labels: typeExistenceLabels
+                            )
+                            .id(fieldScrollID(4))
 
-                        sliderRow(
-                            index: 5,
-                            title: "时长",
-                            value: Binding(get: { time ?? 0.5 }, set: { time = $0 }),
-                            filled: time,
-                            labels: timeLabels
-                        )
+                            sliderRow(
+                                index: 5,
+                                title: "时长",
+                                value: Binding(get: { time ?? 0.5 }, set: { time = $0 }),
+                                filled: time,
+                                labels: timeLabels
+                            )
+                            .id(fieldScrollID(5))
 
-                        sliderRow(
-                            index: 6,
-                            title: "声音",
-                            value: Binding(get: { ((sound ?? 0.0) + 1) / 2 }, set: { sound = $0 * 2 - 1 }),
-                            filled: sound.map { ($0 + 1) / 2 },
-                            labels: soundLabels
-                        )
+                            sliderRow(
+                                index: 6,
+                                title: "声音",
+                                value: Binding(get: { ((sound ?? 0.0) + 1) / 2 }, set: { sound = $0 * 2 - 1 }),
+                                filled: sound.map { ($0 + 1) / 2 },
+                                labels: soundLabels
+                            )
+                            .id(fieldScrollID(6))
 
-                        sliderRow(
-                            index: 7,
-                            title: "氛围",
-                            value: Binding(get: { atm ?? 0.5 }, set: { atm = $0 }),
-                            filled: atm,
-                            labels: atmLabels
-                        )
+                            sliderRow(
+                                index: 7,
+                                title: "氛围",
+                                value: Binding(get: { atm ?? 0.5 }, set: { atm = $0 }),
+                                filled: atm,
+                                labels: atmLabels
+                            )
+                            .id(fieldScrollID(7))
 
-                        sliderRow(
-                            index: 8,
-                            title: "事后状态",
-                            value: Binding(get: { postnut ?? 0.5 }, set: { postnut = $0 }),
-                            filled: postnut,
-                            labels: postnutLabels
-                        )
+                            sliderRow(
+                                index: 8,
+                                title: "事后状态",
+                                value: Binding(get: { postnut ?? 0.5 }, set: { postnut = $0 }),
+                                filled: postnut,
+                                labels: postnutLabels
+                            )
+                            .id(fieldScrollID(8))
 
-                        sliderRow(
-                            index: 9,
-                            title: "欲望程度",
-                            value: Binding(get: { horny ?? 0.5 }, set: { horny = $0 }),
-                            filled: horny,
-                            labels: hornyLabels
-                        )
+                            sliderRow(
+                                index: 9,
+                                title: "欲望程度",
+                                value: Binding(get: { horny ?? 0.5 }, set: { horny = $0 }),
+                                filled: horny,
+                                labels: hornyLabels
+                            )
+                            .id(fieldScrollID(9))
 
-                        FieldRow(
-                            index: 10,
-                            title: "质量",
-                            activeField: $activeField,
-                            filledValue: activeField != 10 ? massSummary : nil
-                        ) {
-                            VStack(alignment: .leading, spacing: 16) {
-                                GeometryReader { geometry in
-                                    let compactFieldWidth = geometry.size.width / 5
+                            FieldRow(
+                                index: 10,
+                                title: "质量",
+                                activeField: $activeField,
+                                filledValue: activeField != 10 ? massSummary : nil
+                            ) {
+                                VStack(alignment: .leading, spacing: 16) {
+                                    GeometryReader { geometry in
+                                        let compactFieldWidth = geometry.size.width / 5
 
-                                    HStack(alignment: .top, spacing: 12) {
-                                        VStack(alignment: .leading, spacing: 8) {
-                                            Text("质量")
-                                                .font(.subheadline.weight(.semibold))
-
-                                            TextField("克数", text: $mass)
-                                                .keyboardType(.decimalPad)
-                                                .textFieldStyle(.roundedBorder)
-                                                .frame(width: compactFieldWidth)
-                                        }
-
-                                        if usePreciseDensity {
+                                        HStack(alignment: .top, spacing: 12) {
                                             VStack(alignment: .leading, spacing: 8) {
-                                                Text("密度")
+                                                Text("质量")
                                                     .font(.subheadline.weight(.semibold))
 
-                                                TextField("密度", text: $preciseDensityInput)
+                                                TextField("克数", text: $mass)
                                                     .keyboardType(.decimalPad)
                                                     .textFieldStyle(.roundedBorder)
                                                     .frame(width: compactFieldWidth)
                                             }
+
+                                            if usePreciseDensity {
+                                                VStack(alignment: .leading, spacing: 8) {
+                                                    Text("密度")
+                                                        .font(.subheadline.weight(.semibold))
+
+                                                    TextField("密度", text: $preciseDensityInput)
+                                                        .keyboardType(.decimalPad)
+                                                        .textFieldStyle(.roundedBorder)
+                                                        .frame(width: compactFieldWidth)
+                                                }
+                                            }
+
+                                            Spacer(minLength: 0)
+                                        }
+                                    }
+                                    .frame(height: 62)
+
+                                    Toggle("精确密度", isOn: $usePreciseDensity)
+                                        .font(.subheadline)
+
+                                    HStack {
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text("估算体积")
+                                                .font(.caption)
+                                                .foregroundStyle(.secondary)
+
+                                            Text(estimatedVolumeText)
+                                                .font(.headline)
+                                                .foregroundStyle(.primary)
                                         }
 
-                                        Spacer(minLength: 0)
+                                        Spacer()
                                     }
-                                }
-                                .frame(height: 62)
-
-                                Toggle("精确密度", isOn: $usePreciseDensity)
-                                    .font(.subheadline)
-
-                                HStack {
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        Text("估算体积")
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
-
-                                        Text(estimatedVolumeText)
-                                            .font(.headline)
-                                            .foregroundStyle(.primary)
-                                    }
-
-                                    Spacer()
                                 }
                             }
+                            .id(fieldScrollID(10))
                         }
                     }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 24)
+                    .padding(.bottom, 20)
                 }
-                .padding(.horizontal, 16)
-                .padding(.top, 24)
-                .padding(.bottom, 20)
+                .onAppear {
+                    markIntroCardSeenIfNeeded()
+                    scrollToField(activeField, using: proxy, animated: false)
+                }
+                .onChange(of: activeField) { _, newValue in
+                    scrollToField(newValue, using: proxy, animated: true)
+                }
             }
             .safeAreaInset(edge: .bottom, spacing: 0) {
                 actionBar
@@ -248,9 +266,6 @@ struct NewRecordView: View {
                         dismiss()
                     }
                 }
-            }
-            .onAppear {
-                markIntroCardSeenIfNeeded()
             }
         }
     }
@@ -292,59 +307,62 @@ struct NewRecordView: View {
     }
 
     private var actionBar: some View {
-        HStack(spacing: 10) {
-            Button {
-                saveAndDismiss()
-            } label: {
-                Text("完成")
-                    .font(.headline.weight(.semibold))
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 52)
-                    .background(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(Color.accentColor)
-                    )
-            }
-            .buttonStyle(.plain)
-
-            if !allFilled {
+        VStack(spacing: 0) {
+            HStack(spacing: 10) {
                 Button {
-                    saveAndDismiss(reminderMinutes: 30)
+                    saveAndDismiss()
                 } label: {
-                    Image(systemName: "clock.badge")
-                        .font(.title3.weight(.semibold))
-                        .foregroundStyle(.primary)
-                        .frame(width: 52, height: 52)
+                    Text("完成")
+                        .font(.headline.weight(.semibold))
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 52)
                         .background(
                             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .fill(Color.primary.opacity(0.06))
+                                .fill(Color.accentColor)
                         )
                 }
                 .buttonStyle(.plain)
-                .contextMenu {
-                    Button("5 分钟后提醒") { saveAndDismiss(reminderMinutes: 5) }
-                    Button("15 分钟后提醒") { saveAndDismiss(reminderMinutes: 15) }
-                    Button("30 分钟后提醒") { saveAndDismiss(reminderMinutes: 30) }
-                    Button("1 小时后提醒") { saveAndDismiss(reminderMinutes: 60) }
-                    Button("2 小时后提醒") { saveAndDismiss(reminderMinutes: 120) }
+
+                if !allFilled {
+                    Button {
+                        saveAndDismiss(reminderMinutes: 30)
+                    } label: {
+                        Image(systemName: "clock.badge")
+                            .font(.title3.weight(.semibold))
+                            .foregroundStyle(.primary)
+                            .frame(width: 52, height: 52)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                    .fill(Color.primary.opacity(0.06))
+                            )
+                    }
+                    .buttonStyle(.plain)
+                    .contextMenu {
+                        Button("5 分钟后提醒") { saveAndDismiss(reminderMinutes: 5) }
+                        Button("15 分钟后提醒") { saveAndDismiss(reminderMinutes: 15) }
+                        Button("30 分钟后提醒") { saveAndDismiss(reminderMinutes: 30) }
+                        Button("1 小时后提醒") { saveAndDismiss(reminderMinutes: 60) }
+                        Button("2 小时后提醒") { saveAndDismiss(reminderMinutes: 120) }
+                    }
                 }
             }
+            .padding(.horizontal, 16)
+            .padding(.top, 8)
+            .padding(.bottom, 12)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
+        .frame(maxWidth: .infinity)
         .background {
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
+            Rectangle()
                 .fill(.ultraThinMaterial)
+                .ignoresSafeArea(edges: [.horizontal, .bottom])
         }
-        .overlay {
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
+        .overlay(alignment: .top) {
+            Rectangle()
+                .fill(Color.primary.opacity(0.08))
+                .frame(height: 1)
         }
-        .padding(.horizontal, 16)
-        .padding(.top, 8)
-        .padding(.bottom, 12)
-        .shadow(color: .black.opacity(0.04), radius: 12, y: 6)
+        .shadow(color: .black.opacity(0.04), radius: 12, y: -2)
     }
 
     @ViewBuilder
@@ -470,6 +488,24 @@ struct NewRecordView: View {
         guard !hasSeenNewRecordIntroCard else { return }
         showIntroCard = true
         hasSeenNewRecordIntroCard = true
+    }
+
+    private func fieldScrollID(_ index: Int) -> String {
+        "new-record-field-\(index)"
+    }
+
+    private func scrollToField(_ index: Int?, using proxy: ScrollViewProxy, animated: Bool) {
+        guard let index else { return }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) {
+            if animated {
+                withAnimation(.easeInOut(duration: 0.34)) {
+                    proxy.scrollTo(fieldScrollID(index), anchor: scrollAnchor)
+                }
+            } else {
+                proxy.scrollTo(fieldScrollID(index), anchor: scrollAnchor)
+            }
+        }
     }
 }
 
