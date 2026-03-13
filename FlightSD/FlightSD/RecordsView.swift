@@ -428,50 +428,46 @@ private struct AddRecordBar: View {
     }
 
     var body: some View {
-        GeometryReader { proxy in
-            Button {
-                action()
-            } label: {
-                HStack {
-                    Text("Add Record")
-                        .font(.headline)
-                        .foregroundStyle(.white)
+        Button {
+            action()
+        } label: {
+            HStack {
+                Text("Add Record")
+                    .font(.headline)
+                    .foregroundStyle(.white)
 
-                    Spacer()
+                Spacer()
 
-                    Image(systemName: "arrow.up.left")
-                        .font(.headline.weight(.semibold))
-                        .foregroundStyle(.white)
-                }
-                .padding(.horizontal, 18)
-                .padding(.vertical, 11)
-                .frame(maxWidth: .infinity)
-                .contentShape(Rectangle())
+                Image(systemName: "arrow.up.left")
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(.white)
             }
-            .buttonStyle(.plain)
-            .frame(width: proxy.size.width * 0.8)
-            .background {
-                ZStack {
-                    Rectangle()
-                        .fill(.ultraThinMaterial)
-
-                    GeometryReader { buttonProxy in
-                        Rectangle()
-                            .fill(diagonalGradient(in: buttonProxy.size))
-                            .saturation(1.3)
-                            .brightness(-0.05)
-                            .opacity(0.60)
-                    }
-                }
-            }
-            .overlay(alignment: .top) {
-                Rectangle()
-                    .fill(Color.white.opacity(0.18))
-                    .frame(height: 1)
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 11)
+            .frame(maxWidth: .infinity)
+            .contentShape(Rectangle())
         }
-        .frame(height: 44)
+        .buttonStyle(.plain)
+        .background {
+            ZStack {
+                Rectangle()
+                    .fill(.ultraThinMaterial)
+
+                GeometryReader { proxy in
+                    Rectangle()
+                        .fill(diagonalGradient(in: proxy.size))
+                        .saturation(1.3)
+                        .brightness(-0.05)
+                        .opacity(0.60)
+                }
+            }
+        }
+        .overlay(alignment: .top) {
+            Rectangle()
+                .fill(Color.white.opacity(0.18))
+                .frame(height: 1)
+        }
+        .ignoresSafeArea(edges: .horizontal)
     }
 }
 
