@@ -48,10 +48,7 @@ struct RecordsView: View {
                 }
             }
             .onPreferenceChange(RecordCardHeightPreferenceKey.self) { newValue in
-                scrollBridge.cardHeights = newValue
-            }
-            .onPreferenceChange(RecordExpandedSectionHeightPreferenceKey.self) { newValue in
-                scrollBridge.expandedSectionHeights = newValue
+                scrollBridge.updateCardHeights(newValue)
             }
             .safeAreaInset(edge: .bottom, spacing: 0) {
                 AddRecordBar {
@@ -162,9 +159,7 @@ struct RecordsView: View {
     }
 
     private func finishEditingAnchoredBelow(_ record: Record) {
-        if let expandedHeight = scrollBridge.expandedSectionHeights[record.persistentModelID] {
-            scrollBridge.animateCompensation(distance: expandedHeight, duration: 0.42)
-        }
+        scrollBridge.beginHeightTracking(for: record.persistentModelID, duration: 0.46)
 
         withAnimation(.spring(response: 0.28, dampingFraction: 0.84)) {
             expandedRecordID = nil
@@ -172,9 +167,7 @@ struct RecordsView: View {
     }
 
     private func prepareDeleteAnchoredBelow(_ record: Record) {
-        if let cardHeight = scrollBridge.cardHeights[record.persistentModelID] {
-            scrollBridge.animateCompensation(distance: cardHeight + 12, duration: 0.54)
-        }
+        scrollBridge.beginHeightTracking(for: record.persistentModelID, duration: 0.78)
 
         withAnimation(.spring(response: 0.28, dampingFraction: 0.84)) {
             expandedRecordID = nil
@@ -191,14 +184,6 @@ struct RecordsView: View {
 }
 
 private struct RecordCardHeightPreferenceKey: PreferenceKey {
-    static var defaultValue: [PersistentIdentifier: CGFloat] = [:]
-
-    static func reduce(value: inout [PersistentIdentifier: CGFloat], nextValue: () -> [PersistentIdentifier: CGFloat]) {
-        value.merge(nextValue(), uniquingKeysWith: { _, new in new })
-    }
-}
-
-private struct RecordExpandedSectionHeightPreferenceKey: PreferenceKey {
     static var defaultValue: [PersistentIdentifier: CGFloat] = [:]
 
     static func reduce(value: inout [PersistentIdentifier: CGFloat], nextValue: () -> [PersistentIdentifier: CGFloat]) {
@@ -256,56 +241,48 @@ private final class RecordsScrollBridge {
         }
     }
     var cardHeights: [PersistentIdentifier: CGFloat] = [:]
-    var expandedSectionHeights: [PersistentIdentifier: CGFloat] = [:]
 
-    private var anchorToken = UUID()
     private var baseContentInsetTop: CGFloat?
     private var baseIndicatorInsetTop: CGFloat?
     private var extraTopInset: CGFloat = 0
+    private var trackedRecordID: PersistentIdentifier?
+    private var trackedHeight: CGFloat?
+    private var trackingToken = UUID()
 
-    func animateCompensation(distance: CGFloat, duration: Double) {
-        guard distance > 0 else { return }
-        captureBaseInsetsIfNeeded()
-        applyExtraTopInset(max(extraTopInset, distance + 24))
-        guard let scrollView else { return }
+    func updateCardHeights(_ newValue: [PersistentIdentifier: CGFloat]) {
+        let previousValue = cardHeights
+        cardHeights = newValue
 
-        let token = UUID()
-        anchorToken = token
-        let startTime = CACurrentMediaTime()
-        let startOffsetY = scrollView.contentOffset.y
-        let minOffsetY = -((baseContentInsetTop ?? scrollView.contentInset.top) + extraTopInset)
-        let maxOffsetY = max(
-            scrollView.contentSize.height - scrollView.bounds.height + scrollView.adjustedContentInset.bottom,
-            minOffsetY
-        )
-        let targetOffsetY = min(max(startOffsetY - distance, minOffsetY), maxOffsetY)
+        guard let trackedRecordID else { return }
 
-        func step() {
-            guard self.anchorToken == token else { return }
-            defer {
-                if CACurrentMediaTime() - startTime < duration {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + (1.0 / 120.0)) {
-                        step()
-                    }
-                } else {
-                    self.settleTopInset()
-                }
-            }
+        let previousHeight = trackedHeight ?? previousValue[trackedRecordID] ?? newValue[trackedRecordID]
+        let currentHeight = newValue[trackedRecordID] ?? 0
 
-            guard
-                let scrollView = self.scrollView
-            else {
-                return
-            }
+        guard let previousHeight else { return }
 
-            let elapsed = min(max((CACurrentMediaTime() - startTime) / duration, 0), 1)
-            let progress = 1 - pow(1 - elapsed, 3)
-            let adjustedOffsetY = startOffsetY + (targetOffsetY - startOffsetY) * progress
-
-            scrollView.setContentOffset(CGPoint(x: scrollView.contentOffset.x, y: adjustedOffsetY), animated: false)
+        let delta = previousHeight - currentHeight
+        if abs(delta) > 0.1 {
+            compensateForHeightDelta(delta)
         }
 
-        step()
+        trackedHeight = currentHeight
+    }
+
+    func beginHeightTracking(for recordID: PersistentIdentifier, duration: Double) {
+        guard let initialHeight = cardHeights[recordID], initialHeight > 0 else { return }
+
+        trackingToken = UUID()
+        trackedRecordID = recordID
+        trackedHeight = initialHeight
+
+        captureBaseInsetsIfNeeded()
+        applyExtraTopInset(max(extraTopInset, initialHeight + 24))
+
+        let token = trackingToken
+        DispatchQueue.main.asyncAfter(deadline: .now() + duration) { [weak self] in
+            guard let self, self.trackingToken == token else { return }
+            self.endHeightTracking()
+        }
     }
 
     private func captureBaseInsetsIfNeeded() {
@@ -348,6 +325,25 @@ private final class RecordsScrollBridge {
         let adjustedOffsetY = min(max(scrollView.contentOffset.y - delta, minOffsetY), maxOffsetY)
 
         scrollView.setContentOffset(CGPoint(x: scrollView.contentOffset.x, y: adjustedOffsetY), animated: false)
+    }
+
+    private func compensateForHeightDelta(_ delta: CGFloat) {
+        guard let scrollView else { return }
+
+        let minOffsetY = -((baseContentInsetTop ?? scrollView.contentInset.top) + extraTopInset)
+        let maxOffsetY = max(
+            scrollView.contentSize.height - scrollView.bounds.height + scrollView.adjustedContentInset.bottom,
+            minOffsetY
+        )
+        let adjustedOffsetY = min(max(scrollView.contentOffset.y - delta, minOffsetY), maxOffsetY)
+
+        scrollView.setContentOffset(CGPoint(x: scrollView.contentOffset.x, y: adjustedOffsetY), animated: false)
+    }
+
+    private func endHeightTracking() {
+        trackedRecordID = nil
+        trackedHeight = nil
+        settleTopInset()
     }
 
     private func settleTopInset() {
@@ -405,15 +401,6 @@ private struct RecordEntryCard: View {
                         saveChanges(scrollsToNextRecord: true)
                     } onDelete: {
                         showDeleteConfirmation = true
-                    }
-                }
-                .background {
-                    GeometryReader { geometry in
-                        Color.clear
-                            .preference(
-                                key: RecordExpandedSectionHeightPreferenceKey.self,
-                                value: [record.persistentModelID: geometry.size.height]
-                            )
                     }
                 }
                 .clipped()
