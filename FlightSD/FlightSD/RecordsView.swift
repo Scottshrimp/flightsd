@@ -26,7 +26,7 @@ struct RecordsView: View {
     private let bigTitleFontSize: CGFloat = 34
     private let monthTitleFontSize: CGFloat = 25
     private let filterButtonSize: CGFloat = 39
-    private let filterButtonIconSize: CGFloat = 25
+    private let filterButtonIconSize: CGFloat = 26
     private let filterButtonTrailingPadding: CGFloat = 14
 
     private var filteredRecords: [Record] {
