@@ -146,14 +146,14 @@ private struct RecordEntryCard: View {
             }
         }
         .background {
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .fill(.thinMaterial)
         }
         .overlay {
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
         }
-        .shadow(color: .black.opacity(0.04), radius: 12, y: 6)
+        .shadow(color: .black.opacity(0.035), radius: 8, y: 4)
         .onChange(of: isExpanded) { _, expanded in
             if expanded {
                 draft = RecordDraft(record: record)
@@ -190,29 +190,47 @@ private struct RecordSummaryRow: View {
     let record: Record
 
     var body: some View {
-        HStack(alignment: .center, spacing: 16) {
-            VStack(alignment: .leading, spacing: 6) {
-                Text(RecordPresentation.recordTitle(for: record.timestamp))
-                    .font(.headline)
+        VStack(alignment: .leading, spacing: 7) {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                if let dateText = RecordPresentation.summaryDateText(for: record.timestamp) {
+                    Text(dateText)
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                }
+
+                Text(RecordPresentation.summaryTimeText(for: record.timestamp))
+                    .font(.caption.weight(.semibold))
                     .foregroundStyle(.primary)
 
-                Text(RecordPresentation.recordSubtitle(for: record))
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-
-            Spacer(minLength: 12)
-
-            HStack(spacing: 12) {
-                MetricDotStrip(metrics: RecordPresentation.metricDots(for: record))
+                Spacer(minLength: 10)
 
                 Text(RecordPresentation.mediaCategory(for: record))
-                    .font(.subheadline.weight(.semibold))
+                    .font(.caption.weight(.semibold))
                     .foregroundStyle(.primary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.72)
+            }
+
+            HStack(spacing: 10) {
+                MetricDotStrip(metrics: RecordPresentation.metricDots(for: record))
+            }
+
+            HStack(spacing: 8) {
+                Text(RecordPresentation.massSummaryText(for: record))
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+
+                Text("·")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+
+                Text(RecordPresentation.volumeSummaryText(for: record))
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
             }
         }
-        .padding(.horizontal, 18)
-        .padding(.vertical, 16)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 11)
         .contentShape(Rectangle())
     }
 }
@@ -389,11 +407,11 @@ private struct MetricDotStrip: View {
     let metrics: [MetricDot]
 
     var body: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 4) {
             ForEach(Array(metrics.enumerated()), id: \.offset) { _, metric in
                 Circle()
                     .fill(zoneColor(for: metric.zone, zoneCount: metric.zoneCount))
-                    .frame(width: 10, height: 10)
+                    .frame(width: 7, height: 7)
             }
         }
     }
@@ -635,10 +653,10 @@ private enum RecordPresentation {
         return formatter
     }()
 
-    private static let pastFormatter: DateFormatter = {
+    private static let summaryDateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "zh_CN")
-        formatter.dateFormat = "M月d日 HH:mm"
+        formatter.dateFormat = "M月d日"
         return formatter
     }()
 
@@ -672,18 +690,38 @@ private enum RecordPresentation {
         dimensionLabel(record.dimension) + mediaTypeLabel(record.mediaType)
     }
 
+    static func summaryDateText(for date: Date) -> String? {
+        let calendar = Calendar.current
+        if calendar.isDateInToday(date) {
+            return nil
+        }
+        return summaryDateFormatter.string(from: date)
+    }
+
+    static func summaryTimeText(for date: Date) -> String {
+        todayFormatter.string(from: date)
+    }
+
     static func recordTitle(for date: Date) -> String {
         let calendar = Calendar.current
         if calendar.isDateInToday(date) {
             return todayFormatter.string(from: date)
         }
-        return pastFormatter.string(from: date)
+        return "\(summaryDateFormatter.string(from: date)) \(todayFormatter.string(from: date))"
     }
 
     static func recordSubtitle(for record: Record) -> String {
         let mass = numberText(record.mass, maxFractionDigits: 1)
         let estVol = fixedNumberText(record.estVol, fractionDigits: 2)
         return "\(mass) g · \(estVol) mL"
+    }
+
+    static func massSummaryText(for record: Record) -> String {
+        "\(numberText(record.mass, maxFractionDigits: 1)) g"
+    }
+
+    static func volumeSummaryText(for record: Record) -> String {
+        "\(fixedNumberText(record.estVol, fractionDigits: 2)) mL"
     }
 
     static func metricDots(for record: Record) -> [MetricDot] {
