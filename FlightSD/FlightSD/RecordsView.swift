@@ -28,7 +28,7 @@ struct RecordsView: View {
 
                 earlierSection
             }
-            .padding(.horizontal, 16)
+            .padding(.horizontal, 10)
             .padding(.top, 24)
             .padding(.bottom, 20)
         }
@@ -146,11 +146,11 @@ private struct RecordEntryCard: View {
             }
         }
         .background {
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .fill(.thinMaterial)
         }
         .overlay {
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
         }
         .shadow(color: .black.opacity(0.04), radius: 12, y: 6)
@@ -200,20 +200,20 @@ private struct RecordSummaryRow: View {
                     MetricDotStrip(metrics: RecordPresentation.metricDots(for: record))
 
                     Text(RecordPresentation.metricSummary(for: record))
-                        .font(.caption2)
+                        .font(.caption.weight(.medium))
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
 
                 Text(RecordPresentation.mediaCategory(for: record))
-                    .font(.caption.weight(.semibold))
+                    .font(.footnote.weight(.semibold))
                     .foregroundStyle(.primary)
                     .lineLimit(1)
                     .fixedSize(horizontal: true, vertical: false)
             }
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 11)
         .contentShape(Rectangle())
     }
 }
@@ -225,12 +225,12 @@ private struct TimestampLine: View {
         HStack(spacing: 6) {
             if let dateText = RecordPresentation.dateText(for: timestamp) {
                 Text(dateText)
-                    .font(.caption2.weight(.medium))
+                    .font(.caption.weight(.medium))
                     .foregroundStyle(.secondary)
             }
 
             Text(RecordPresentation.timeText(for: timestamp))
-                .font(.caption.weight(.semibold))
+                .font(.footnote.weight(.semibold))
                 .foregroundStyle(.primary)
         }
         .lineLimit(1)
@@ -409,11 +409,11 @@ private struct MetricDotStrip: View {
     let metrics: [MetricDot]
 
     var body: some View {
-        HStack(spacing: 3) {
+        HStack(spacing: 4) {
             ForEach(Array(metrics.enumerated()), id: \.offset) { _, metric in
                 Circle()
                     .fill(zoneColor(for: metric.zone, zoneCount: metric.zoneCount))
-                    .frame(width: 5.5, height: 5.5)
+                    .frame(width: 6.5, height: 6.5)
             }
         }
     }
