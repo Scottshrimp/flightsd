@@ -657,18 +657,22 @@ private struct TimestampLine: View {
     let record: Record
     var inlineMetrics: [MetricDot] = []
 
+    private var usesSwappedDateTimeStyle: Bool {
+        !Calendar.current.isDateInToday(RecordPresentation.recordDate(for: record))
+    }
+
     var body: some View {
         HStack(spacing: 6) {
             if let dateText = RecordPresentation.summaryDateText(for: record) {
                 Text(dateText)
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(.secondary)
+                    .font(usesSwappedDateTimeStyle ? .footnote.weight(.semibold) : .caption.weight(.medium))
+                    .foregroundStyle(usesSwappedDateTimeStyle ? .primary : .secondary)
             }
 
             if let timeText = RecordPresentation.summaryTimeText(for: record) {
                 Text(timeText)
-                    .font(.footnote.weight(.semibold))
-                    .foregroundStyle(.primary)
+                    .font(usesSwappedDateTimeStyle ? .caption.weight(.medium) : .footnote.weight(.semibold))
+                    .foregroundStyle(usesSwappedDateTimeStyle ? .secondary : .primary)
             }
 
             if !inlineMetrics.isEmpty {
