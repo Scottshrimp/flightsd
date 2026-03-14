@@ -71,10 +71,10 @@ struct NewRecordView: View {
 
     private var estimatedVolumeText: String {
         guard let massValue = parsedOptionalNumber(from: mass) else { return "--" }
-        let fallbackDensity = effectiveGlobalDensity(from: records)
-        let density = usePreciseDensity ? (parsedOptionalNumber(from: preciseDensityInput) ?? fallbackDensity) : fallbackDensity
-        let estimatedVolume = massValue / density
-        return "\(newRecordFixedNumberText(estimatedVolume, fractionDigits: 2)) mL"
+        let averageDensity = storedAverageDensity(from: records)
+        let preciseDensity = usePreciseDensity ? parsedOptionalNumber(from: preciseDensityInput) : nil
+        let estimatedVolume = estimatedVolume(for: massValue, preciseDensity: preciseDensity, averageDensity: averageDensity)
+        return "\(fixedDisplayNumberText(estimatedVolume, fractionDigits: 2)) mL"
     }
 
     private var preciseDensityToggleBinding: Binding<Bool> {
@@ -863,18 +863,4 @@ private func newRecordZoneColor(for zone: Int, zoneCount: Int) -> Color {
     )
 
     return palette[min(max(scaledIndex, 0), palette.count - 1)]
-}
-
-private func newRecordNumberText(_ value: Double, maxFractionDigits: Int) -> String {
-    value.formatted(
-        .number
-            .precision(.fractionLength(0 ... maxFractionDigits))
-    )
-}
-
-private func newRecordFixedNumberText(_ value: Double, fractionDigits: Int) -> String {
-    value.formatted(
-        .number
-            .precision(.fractionLength(fractionDigits))
-    )
 }

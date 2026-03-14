@@ -1626,9 +1626,8 @@ private struct RecordDraft {
 
     var estimatedVolumeText: String {
         guard let massValue else { return "--" }
-        let density = preciseDensityValue ?? avgDensity ?? defaultDensity
-        let estVol = massValue / density
-        return "\(RecordPresentation.fixedNumberText(estVol, fractionDigits: 2)) mL"
+        let estVol = estimatedVolume(for: massValue, preciseDensity: preciseDensityValue, averageDensity: avgDensity)
+        return "\(fixedDisplayNumberText(estVol, fractionDigits: 2)) mL"
     }
 
     mutating func setDate(_ newValue: Date) {
@@ -1777,8 +1776,8 @@ private enum RecordPresentation {
     }
 
     static func metricSummary(for record: Record) -> String {
-        let mass = record.mass.map { fixedNumberText($0, fractionDigits: 2) } ?? "--"
-        let estVol = record.estVol.map { fixedNumberText($0, fractionDigits: 2) } ?? "--"
+        let mass = record.mass.map { fixedDisplayNumberText($0, fractionDigits: 2) } ?? "--"
+        let estVol = record.estVol.map { fixedDisplayNumberText($0, fractionDigits: 2) } ?? "--"
         return "\(mass) g · \(estVol) mL"
     }
 
@@ -1798,20 +1797,6 @@ private enum RecordPresentation {
             MetricDot(zone: record.horny.map { zoneIndex(for: $0, zoneCount: hornyLabels.count) }, zoneCount: hornyLabels.count),
             MetricDot(zone: record.postnut.map { zoneIndex(for: $0, zoneCount: postnutLabels.count) }, zoneCount: postnutLabels.count)
         ]
-    }
-
-    static func numberText(_ value: Double, maxFractionDigits: Int) -> String {
-        value.formatted(
-            .number
-                .precision(.fractionLength(0 ... maxFractionDigits))
-        )
-    }
-
-    static func fixedNumberText(_ value: Double, fractionDigits: Int) -> String {
-        value.formatted(
-            .number
-                .precision(.fractionLength(fractionDigits))
-        )
     }
 }
 

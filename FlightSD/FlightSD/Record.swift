@@ -44,8 +44,7 @@ class Record {
     // ⑧ 计算属性：est.vol 不存储，实时根据 mass 和密度计算
     var estVol: Double? {
         guard let mass else { return nil }
-        let density = preciseDensity ?? avgDensity ?? defaultDensity
-        return mass / density
+        return estimatedVolume(for: mass, preciseDensity: preciseDensity, averageDensity: avgDensity)
     }
 
     // ⑨ 初始化函数：新建一条记录时，给所有字段赋初始值
@@ -118,11 +117,6 @@ func refreshStoredAverages(in modelContext: ModelContext) -> (avgMass: Double?, 
     return (averageMass, averageDensity)
 }
 
-@discardableResult
-func refreshAverageMass(in modelContext: ModelContext) -> Double? {
-    refreshStoredAverages(in: modelContext).avgMass
-}
-
 func storedAverageMass(from records: [Record]) -> Double? {
     computeAverageMass(from: records) ?? records.compactMap(\.avgMass).last
 }
@@ -133,6 +127,21 @@ func storedAverageDensity(from records: [Record]) -> Double? {
 
 func effectiveGlobalDensity(from records: [Record]) -> Double {
     storedAverageDensity(from: records) ?? defaultDensity
+}
+
+func effectiveDensity(preciseDensity: Double?, averageDensity: Double?) -> Double {
+    preciseDensity ?? averageDensity ?? defaultDensity
+}
+
+func estimatedVolume(for mass: Double, preciseDensity: Double? = nil, averageDensity: Double? = nil) -> Double {
+    mass / effectiveDensity(preciseDensity: preciseDensity, averageDensity: averageDensity)
+}
+
+func fixedDisplayNumberText(_ value: Double, fractionDigits: Int) -> String {
+    value.formatted(
+        .number
+            .precision(.fractionLength(fractionDigits))
+    )
 }
 
 func parsedRecordNumber(from text: String) -> Double? {

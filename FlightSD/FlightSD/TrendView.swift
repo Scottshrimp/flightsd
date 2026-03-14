@@ -181,7 +181,7 @@ private struct WeekTrendSummary {
     }
 
     var totalEstimatedVolume: Double {
-        totalMass / (averageDensity ?? defaultDensity)
+        estimatedVolume(for: totalMass, averageDensity: averageDensity)
     }
 }
 
@@ -201,9 +201,9 @@ private enum WeekTrendMetric {
     func valueText(estVolume: Double, mass: Double) -> String {
         switch self {
         case .estVolume:
-            return "\(trendMetricNumberText(estVolume))ml"
+            return "\(fixedDisplayNumberText(estVolume, fractionDigits: 2))ml"
         case .mass:
-            return "\(trendMetricNumberText(mass))g"
+            return "\(fixedDisplayNumberText(mass, fractionDigits: 2))g"
         }
     }
 }
@@ -224,12 +224,4 @@ private struct TrendPlaceholderPage: View {
             .frame(maxWidth: .infinity, alignment: .topLeading)
         }
     }
-}
-
-private func trendMetricNumberText(_ value: Double) -> String {
-    let formatter = NumberFormatter()
-    formatter.numberStyle = .decimal
-    formatter.minimumFractionDigits = 2
-    formatter.maximumFractionDigits = 2
-    return formatter.string(from: NSNumber(value: value)) ?? String(format: "%.2f", value)
 }
