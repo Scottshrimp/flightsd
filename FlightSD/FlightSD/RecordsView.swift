@@ -88,7 +88,7 @@ struct RecordsView: View {
         VStack(alignment: .leading, spacing: sectionHeaderSpacing) {
             HStack(alignment: .center, spacing: 12) {
                 Text(title)
-                    .font(.system(size: bigTitleFontSize, weight: .bold, design: .rounded))
+                    .font(.system(size: bigTitleFontSize, weight: .bold, design: .default))
                     .padding(.leading, bigTitleLeadingPadding)
 
                 Spacer(minLength: 12)
@@ -140,7 +140,7 @@ struct RecordsView: View {
     private func earlierSection(proxy: ScrollViewProxy) -> some View {
         VStack(alignment: .leading, spacing: sectionHeaderSpacing) {
             Text("Earlier")
-                .font(.system(size: bigTitleFontSize, weight: .bold, design: .rounded))
+                .font(.system(size: bigTitleFontSize, weight: .bold, design: .default))
                 .padding(.leading, bigTitleLeadingPadding)
 
             if groupedRecords.earlierMonths.isEmpty {
@@ -151,7 +151,7 @@ struct RecordsView: View {
                     ForEach(groupedRecords.earlierMonths) { monthGroup in
                         VStack(alignment: .leading, spacing: 14) {
                             Text(RecordPresentation.monthTitle(monthGroup.monthStart))
-                                .font(.system(size: monthTitleFontSize, weight: .semibold, design: .rounded))
+                                .font(.system(size: monthTitleFontSize, weight: .semibold, design: .default))
                                 .foregroundStyle(.secondary)
                                 .padding(.leading, bigTitleLeadingPadding)
 

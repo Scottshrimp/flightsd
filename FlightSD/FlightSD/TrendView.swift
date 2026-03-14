@@ -30,26 +30,13 @@ struct TrendView: View {
     }
 
     private var trendTabSelector: some View {
-        HStack(spacing: 8) {
+        Picker("Trend Range", selection: $selectedTab) {
             ForEach(TrendTab.allCases) { tab in
-                Button {
-                    withAnimation(.easeInOut(duration: 0.22)) {
-                        selectedTab = tab
-                    }
-                } label: {
-                    Text(tab.title)
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(selectedTab == tab ? Color.white : Color.primary)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 38)
-                        .background {
-                            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .fill(selectedTab == tab ? Color.accentColor : Color.primary.opacity(0.06))
-                        }
-                }
-                .buttonStyle(.plain)
+                Text(tab.title)
+                    .tag(tab)
             }
         }
+        .pickerStyle(.segmented)
     }
 }
 
@@ -102,11 +89,11 @@ private struct WeekTrendPage: View {
             }
         } label: {
             Color.clear
-                .frame(maxWidth: .infinity, minHeight: 120)
+                .frame(maxWidth: .infinity, minHeight: 110)
                 .overlay(alignment: .topLeading) {
                     VStack(alignment: .leading, spacing: 3) {
                         Text("This Week")
-                            .font(.system(.title, design: .rounded).weight(.bold))
+                            .font(.system(.title, design: .default).weight(.bold))
                             .foregroundStyle(.primary)
                             .lineLimit(1)
                             .fixedSize(horizontal: true, vertical: true)
@@ -121,11 +108,13 @@ private struct WeekTrendPage: View {
                 }
                 .overlay(alignment: .bottomTrailing) {
                     Text(metric.valueText(estVolume: weekSummary.totalEstimatedVolume, mass: weekSummary.totalMass))
-                        .font(.system(size: 50, weight: .bold, design: .rounded))
+                        .font(.system(size: 50, weight: .bold, design: .default))
                         .foregroundStyle(.primary)
                         .lineLimit(1)
                         .fixedSize(horizontal: true, vertical: true)
                         .contentTransition(.numericText())
+                        .padding(.trailing, 9)
+                        .padding(.bottom, -10)
                 }
             .padding(.horizontal, 18)
             .padding(.vertical, 18)
