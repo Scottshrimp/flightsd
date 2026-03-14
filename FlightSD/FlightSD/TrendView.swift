@@ -92,11 +92,17 @@ private struct WeekTrendPage: View {
                 .frame(maxWidth: .infinity, minHeight: 110)
                 .overlay(alignment: .topLeading) {
                     VStack(alignment: .leading, spacing: 3) {
-                        Text("This Week")
-                            .font(.system(.title, design: .default).weight(.bold))
-                            .foregroundStyle(.primary)
-                            .lineLimit(1)
-                            .fixedSize(horizontal: true, vertical: true)
+                        HStack(alignment: .center, spacing: 13) {
+                            Text("This Week")
+                                .font(.system(.title, design: .default).weight(.bold))
+                                .foregroundStyle(.primary)
+                                .lineLimit(1)
+                                .fixedSize(horizontal: true, vertical: true)
+
+                            Circle()
+                                .fill(weekTrendMassColor(for: weekSummary.totalMass))
+                                .frame(width: 12, height: 12)
+                        }
 
                         Text(metric.label)
                             .font(.system(size: 18, weight: .medium, design: .rounded))
@@ -194,6 +200,21 @@ private enum WeekTrendMetric {
         case .mass:
             return "\(fixedDisplayNumberText(mass, fractionDigits: 2))g"
         }
+    }
+}
+
+private func weekTrendMassColor(for totalMass: Double) -> Color {
+    switch totalMass {
+    case ...8:
+        return .teal
+    case 8...20:
+        return .blue
+    case 20...34:
+        return .green
+    case 34...44:
+        return .orange
+    default:
+        return .pink
     }
 }
 

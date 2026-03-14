@@ -144,7 +144,7 @@ struct RecordsView: View {
                 .padding(.leading, bigTitleLeadingPadding)
 
             if groupedRecords.earlierMonths.isEmpty {
-                EmptySectionCard(message: "还没有更久之前的记录")
+                EmptySectionCard(message: "No earlier records")
                     .padding(.horizontal, recordCardHorizontalInset)
             } else {
                 VStack(alignment: .leading, spacing: monthGroupSpacing) {
@@ -1673,15 +1673,15 @@ private enum RecordPresentation {
 
     private static let timeFormatter: DateFormatter = {
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "zh_CN")
+        formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.dateFormat = "HH:mm"
         return formatter
     }()
 
     private static let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "zh_CN")
-        formatter.dateFormat = "M月d日"
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "LLL. ddd"
         return formatter
     }()
 
@@ -1706,22 +1706,22 @@ private enum RecordPresentation {
     static func dimensionLabel(_ dimension: Dimension) -> String {
         switch dimension {
         case .twoDimension:
-            return "二次元"
+            return "Waif"
         case .threeDimension:
-            return "三次元"
+            return "Real"
         }
     }
 
     static func mediaTypeLabel(_ mediaType: MediaType) -> String {
         switch mediaType {
         case .img:
-            return "图片"
+            return "Pic"
         case .vid:
-            return "视频"
+            return "Vid"
         case .txt:
-            return "文本"
+            return "Txt"
         case .aud:
-            return "声音"
+            return "Aud"
         }
     }
 
@@ -1734,7 +1734,7 @@ private enum RecordPresentation {
         case let (nil, .some(mediaType)):
             return mediaTypeLabel(mediaType)
         case (nil, nil):
-            return "未分类"
+            return "Uncategorized"
         }
     }
 
