@@ -1,6 +1,8 @@
 import Foundation
 import SwiftData
 
+let defaultDensity: Double = 1.035
+
 enum Dimension: String, Codable {
     case twoDimension = "2D"
     case threeDimension = "3D"
@@ -33,6 +35,7 @@ class Record {
 
     // ⑥ 实测质量
     var mass: Double?       // 单位：克
+    var avgMass: Double?
 
     // ⑦ 精确密度（可选）：没有开启精确测量时为 nil
     var preciseDensity: Double?
@@ -40,7 +43,7 @@ class Record {
     // ⑧ 计算属性：est.vol 不存储，实时根据 mass 和密度计算
     var estVol: Double? {
         guard let mass else { return nil }
-        let density = preciseDensity ?? 1.035
+        let density = preciseDensity ?? defaultDensity
         return mass / density
     }
 
@@ -59,6 +62,7 @@ class Record {
         postnut: Double? = nil,
         horny: Double? = nil,
         mass: Double? = nil,
+        avgMass: Double? = nil,
         preciseDensity: Double? = nil
     ) {
         self.timestamp = timestamp
@@ -74,8 +78,34 @@ class Record {
         self.postnut = postnut
         self.horny = horny
         self.mass = mass
+        self.avgMass = avgMass
         self.preciseDensity = preciseDensity
     }
+}
+
+func computeAverageMass(from records: [Record]) -> Double? {
+    let validMasses = records.compactMap(\.mass).filter { $0 > 0 }
+    guard !validMasses.isEmpty else { return nil }
+    let totalMass = validMasses.reduce(0, +)
+    return totalMass / Double(validMasses.count)
+}
+
+@discardableResult
+func refreshAverageMass(in modelContext: ModelContext) -> Double? {
+    let descriptor = FetchDescriptor<Record>(sortBy: [SortDescriptor(\Record.timestamp, order: .forward)])
+    guard let records = try? modelContext.fetch(descriptor) else { return nil }
+
+    let averageMass = computeAverageMass(from: records)
+    for record in records {
+        record.avgMass = averageMass
+    }
+
+    try? modelContext.save()
+    return averageMass
+}
+
+func storedAverageMass(from records: [Record]) -> Double? {
+    computeAverageMass(from: records) ?? records.compactMap(\.avgMass).last
 }
 
 func normalizedRecordDate(_ date: Date, calendar: Calendar = .current) -> Date {

@@ -70,7 +70,7 @@ struct NewRecordView: View {
 
     private var estimatedVolumeText: String {
         guard let massValue = parsedOptionalNumber(from: mass) else { return "--" }
-        let density = usePreciseDensity ? (parsedOptionalNumber(from: preciseDensityInput) ?? 1.035) : 1.035
+        let density = usePreciseDensity ? (parsedOptionalNumber(from: preciseDensityInput) ?? defaultDensity) : defaultDensity
         let estimatedVolume = massValue / density
         return "\(newRecordFixedNumberText(estimatedVolume, fractionDigits: 2)) mL"
     }
@@ -568,6 +568,7 @@ struct NewRecordView: View {
 
         modelContext.insert(record)
         try? modelContext.save()
+        refreshAverageMass(in: modelContext)
     }
 
     private func scheduleReminder(minutes: Int) {

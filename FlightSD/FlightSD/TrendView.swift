@@ -8,7 +8,7 @@ struct TrendView: View {
     private let horizontalPadding: CGFloat = 18
 
     var body: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: 3) {
             trendTabSelector
                 .padding(.horizontal, horizontalPadding)
                 .padding(.top, 18)
@@ -94,12 +94,30 @@ private struct WeekTrendPage: View {
         }
     }
 
+    private var weekFallbackAverageMass: Double? {
+        guard invalidWeekMassCount > 0 else { return nil }
+        return storedAverageMass(from: records)
+    }
+
+    private var validWeekMassTotal: Double {
+        thisWeekRecords.compactMap(\.mass).filter { $0 > 0 }.reduce(0, +)
+    }
+
+    private var invalidWeekMassCount: Int {
+        thisWeekRecords.reduce(0) { partialResult, record in
+            guard let mass = record.mass, mass > 0 else {
+                return partialResult + 1
+            }
+            return partialResult
+        }
+    }
+
     private var thisWeekEstVolume: Double {
-        thisWeekRecords.compactMap(\.estVol).reduce(0, +)
+        thisWeekMass / defaultDensity
     }
 
     private var thisWeekMass: Double {
-        thisWeekRecords.compactMap(\.mass).reduce(0, +)
+        validWeekMassTotal + Double(invalidWeekMassCount) * (weekFallbackAverageMass ?? 0)
     }
 
     var body: some View {
@@ -119,27 +137,32 @@ private struct WeekTrendPage: View {
                 metric = metric == .estVolume ? .mass : .estVolume
             }
         } label: {
-            HStack(alignment: .center, spacing: 20) {
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("This Week")
-                        .font(.system(.title, design: .rounded).weight(.bold))
-                        .foregroundStyle(.primary)
-
-                    HStack(alignment: .lastTextBaseline, spacing: 8) {
-                        Text(metric.label)
-                            .font(.subheadline.weight(.medium))
-                            .foregroundStyle(.secondary)
-
-                        Text(metric.valueText(estVolume: thisWeekEstVolume, mass: thisWeekMass))
-                            .font(.title3.weight(.bold))
+            Color.clear
+                .frame(maxWidth: .infinity, minHeight: 120)
+                .overlay(alignment: .topLeading) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("This Week")
+                            .font(.system(.title, design: .rounded).weight(.bold))
                             .foregroundStyle(.primary)
-                            .contentTransition(.numericText())
-                    }
-                }
+                            .lineLimit(1)
+                            .fixedSize(horizontal: true, vertical: true)
 
-                Spacer(minLength: 0)
-            }
-            .frame(maxWidth: .infinity, minHeight: 132, alignment: .leading)
+                        Text(metric.label)
+                            .font(.system(size: 18, weight: .medium, design: .rounded))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                            .fixedSize(horizontal: true, vertical: true)
+                    }
+                    .fixedSize(horizontal: true, vertical: true)
+                }
+                .overlay(alignment: .bottomTrailing) {
+                    Text(metric.valueText(estVolume: thisWeekEstVolume, mass: thisWeekMass))
+                        .font(.system(size: 50, weight: .bold, design: .rounded))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+                        .fixedSize(horizontal: true, vertical: true)
+                        .contentTransition(.numericText())
+                }
             .padding(.horizontal, 18)
             .padding(.vertical, 18)
             .background {

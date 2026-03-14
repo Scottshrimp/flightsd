@@ -562,6 +562,7 @@ private struct RecordEntryCard: View {
         record.preciseDensity = draft.preciseDensityValue
 
         try? modelContext.save()
+        refreshAverageMass(in: modelContext)
 
         if scrollsToNextRecord {
             onBottomDone()
@@ -574,6 +575,7 @@ private struct RecordEntryCard: View {
         onDeleteConfirmed {
             modelContext.delete(record)
             try? modelContext.save()
+            refreshAverageMass(in: modelContext)
         }
     }
 }
@@ -1618,7 +1620,7 @@ private struct RecordDraft {
 
     var estimatedVolumeText: String {
         guard let massValue else { return "--" }
-        let density = preciseDensityValue ?? 1.035
+        let density = preciseDensityValue ?? defaultDensity
         let estVol = massValue / density
         return "\(RecordPresentation.fixedNumberText(estVol, fractionDigits: 2)) mL"
     }
