@@ -80,44 +80,8 @@ private struct WeekTrendPage: View {
     private let horizontalPadding: CGFloat = 18
     private let cardCornerRadius: CGFloat = 14
 
-    private var thisWeekRecords: [Record] {
-        let calendar = Calendar.current
-        let today = calendar.startOfDay(for: .now)
-        guard let start = calendar.date(byAdding: .day, value: -6, to: today),
-              let end = calendar.date(byAdding: .day, value: 1, to: today) else {
-            return []
-        }
-
-        return records.filter { record in
-            let recordDate = normalizedRecordDate(record.timestamp, calendar: calendar)
-            return recordDate >= start && recordDate < end
-        }
-    }
-
-    private var weekFallbackAverageMass: Double? {
-        guard invalidWeekMassCount > 0 else { return nil }
-        return storedAverageMass(from: records)
-    }
-
-    private var validWeekMassTotal: Double {
-        thisWeekRecords.compactMap(\.mass).filter { $0 > 0 }.reduce(0, +)
-    }
-
-    private var invalidWeekMassCount: Int {
-        thisWeekRecords.reduce(0) { partialResult, record in
-            guard let mass = record.mass, mass > 0 else {
-                return partialResult + 1
-            }
-            return partialResult
-        }
-    }
-
-    private var thisWeekEstVolume: Double {
-        thisWeekMass / defaultDensity
-    }
-
-    private var thisWeekMass: Double {
-        validWeekMassTotal + Double(invalidWeekMassCount) * (weekFallbackAverageMass ?? 0)
+    private var weekSummary: WeekTrendSummary {
+        WeekTrendSummary(records: records)
     }
 
     var body: some View {
@@ -156,7 +120,7 @@ private struct WeekTrendPage: View {
                     .fixedSize(horizontal: true, vertical: true)
                 }
                 .overlay(alignment: .bottomTrailing) {
-                    Text(metric.valueText(estVolume: thisWeekEstVolume, mass: thisWeekMass))
+                    Text(metric.valueText(estVolume: weekSummary.totalEstimatedVolume, mass: weekSummary.totalMass))
                         .font(.system(size: 50, weight: .bold, design: .rounded))
                         .foregroundStyle(.primary)
                         .lineLimit(1)
@@ -177,6 +141,45 @@ private struct WeekTrendPage: View {
             .contentShape(RoundedRectangle(cornerRadius: cardCornerRadius, style: .continuous))
         }
         .buttonStyle(.plain)
+    }
+}
+
+private struct WeekTrendSummary {
+    let weekRecords: [Record]
+    let validMassValues: [Double]
+    let invalidMassRecordCount: Int
+    let averageMass: Double?
+
+    init(records: [Record], calendar: Calendar = .current, referenceDate: Date = .now) {
+        let today = calendar.startOfDay(for: referenceDate)
+        let start = calendar.date(byAdding: .day, value: -6, to: today)
+        let end = calendar.date(byAdding: .day, value: 1, to: today)
+
+        weekRecords = records.filter { record in
+            guard let start, let end else { return false }
+            let recordDate = normalizedRecordDate(record.timestamp, calendar: calendar)
+            return recordDate >= start && recordDate < end
+        }
+
+        validMassValues = weekRecords.compactMap { record in
+            guard let mass = record.mass, mass > 0 else { return nil }
+            return mass
+        }
+
+        invalidMassRecordCount = weekRecords.count - validMassValues.count
+        averageMass = invalidMassRecordCount > 0 ? storedAverageMass(from: records) : nil
+    }
+
+    var totalValidMass: Double {
+        validMassValues.reduce(0, +)
+    }
+
+    var totalMass: Double {
+        totalValidMass + Double(invalidMassRecordCount) * (averageMass ?? 0)
+    }
+
+    var totalEstimatedVolume: Double {
+        totalMass / defaultDensity
     }
 }
 

@@ -844,10 +844,10 @@ private struct RecordInlineEditor: View {
                 isSliderDragging: $isSliderDragging
             )
 
-            EditorBlock(title: "Mass") {
+            EditorBlock(title: "") {
                 VStack(alignment: .leading, spacing: 12) {
                     GeometryReader { geometry in
-                        let compactFieldWidth = geometry.size.width / 5
+                        let compactFieldWidth = max(118, geometry.size.width * 0.26)
 
                         HStack(alignment: .top, spacing: 12) {
                             VStack(alignment: .leading, spacing: 8) {
@@ -1209,8 +1209,10 @@ private struct EditorBlock<Content: View>: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text(title)
-                .font(.subheadline.weight(.semibold))
+            if !title.isEmpty {
+                Text(title)
+                    .font(.subheadline.weight(.semibold))
+            }
 
             content()
         }
@@ -1505,7 +1507,9 @@ private struct RecordGroups {
 
     init(records: [Record], calendar: Calendar) {
         let startOfToday = calendar.startOfDay(for: Date.now)
-        let startOfPastWeek = calendar.date(byAdding: .day, value: -7, to: startOfToday) ?? startOfToday
+        // Keep "Today" separate and let "This Week" cover the previous 6 days,
+        // so together they match TrendView's rolling 7-day window.
+        let startOfPastWeek = calendar.date(byAdding: .day, value: -6, to: startOfToday) ?? startOfToday
 
         var todayRecords: [Record] = []
         var pastWeekRecords: [Record] = []

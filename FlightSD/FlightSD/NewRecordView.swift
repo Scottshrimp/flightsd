@@ -232,7 +232,7 @@ struct NewRecordView: View {
                             ) {
                                 VStack(alignment: .leading, spacing: 16) {
                                     GeometryReader { geometry in
-                                        let compactFieldWidth = geometry.size.width / 5
+                                        let compactFieldWidth = max(118, geometry.size.width * 0.26)
 
                                         HStack(alignment: .top, spacing: 12) {
                                             VStack(alignment: .leading, spacing: 8) {
