@@ -19,6 +19,10 @@ struct FlightSDApp: App {
         }
     }()
 
+    init() {
+        _ = refreshStoredAverages(in: sharedModelContainer.mainContext)
+    }
+
     var body: some Scene {
         WindowGroup {
             ContentView()

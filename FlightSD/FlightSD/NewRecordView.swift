@@ -6,6 +6,7 @@ struct NewRecordView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @AppStorage("hasSeenNewRecordIntroCard") private var hasSeenNewRecordIntroCard: Bool = false
+    @Query(sort: \Record.timestamp, order: .reverse) private var records: [Record]
 
     @State private var activeField: Int? = 0
     @State private var showIntroCard: Bool = false
@@ -70,7 +71,8 @@ struct NewRecordView: View {
 
     private var estimatedVolumeText: String {
         guard let massValue = parsedOptionalNumber(from: mass) else { return "--" }
-        let density = usePreciseDensity ? (parsedOptionalNumber(from: preciseDensityInput) ?? defaultDensity) : defaultDensity
+        let fallbackDensity = effectiveGlobalDensity(from: records)
+        let density = usePreciseDensity ? (parsedOptionalNumber(from: preciseDensityInput) ?? fallbackDensity) : fallbackDensity
         let estimatedVolume = massValue / density
         return "\(newRecordFixedNumberText(estimatedVolume, fractionDigits: 2)) mL"
     }
@@ -568,7 +570,7 @@ struct NewRecordView: View {
 
         modelContext.insert(record)
         try? modelContext.save()
-        refreshAverageMass(in: modelContext)
+        refreshStoredAverages(in: modelContext)
     }
 
     private func scheduleReminder(minutes: Int) {

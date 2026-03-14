@@ -562,7 +562,7 @@ private struct RecordEntryCard: View {
         record.preciseDensity = draft.preciseDensityValue
 
         try? modelContext.save()
-        refreshAverageMass(in: modelContext)
+        refreshStoredAverages(in: modelContext)
 
         if scrollsToNextRecord {
             onBottomDone()
@@ -575,7 +575,7 @@ private struct RecordEntryCard: View {
         onDeleteConfirmed {
             modelContext.delete(record)
             try? modelContext.save()
-            refreshAverageMass(in: modelContext)
+            refreshStoredAverages(in: modelContext)
         }
     }
 }
@@ -1571,6 +1571,7 @@ private struct RecordDraft {
     var massText: String
     var usePreciseDensity: Bool
     var preciseDensityText: String
+    var avgDensity: Double?
 
     init(record: Record) {
         timestamp = normalizedRecordDate(record.timestamp)
@@ -1592,6 +1593,7 @@ private struct RecordDraft {
         preciseDensityText = record.preciseDensity.map {
             editableRecordNumberText($0, maxFractionDigits: 3)
         } ?? ""
+        avgDensity = record.avgDensity
     }
 
     var displayedExactTime: Date {
@@ -1624,7 +1626,7 @@ private struct RecordDraft {
 
     var estimatedVolumeText: String {
         guard let massValue else { return "--" }
-        let density = preciseDensityValue ?? defaultDensity
+        let density = preciseDensityValue ?? avgDensity ?? defaultDensity
         let estVol = massValue / density
         return "\(RecordPresentation.fixedNumberText(estVol, fractionDigits: 2)) mL"
     }

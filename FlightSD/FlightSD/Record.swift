@@ -39,11 +39,12 @@ class Record {
 
     // ⑦ 精确密度（可选）：没有开启精确测量时为 nil
     var preciseDensity: Double?
+    var avgDensity: Double?
 
     // ⑧ 计算属性：est.vol 不存储，实时根据 mass 和密度计算
     var estVol: Double? {
         guard let mass else { return nil }
-        let density = preciseDensity ?? defaultDensity
+        let density = preciseDensity ?? avgDensity ?? defaultDensity
         return mass / density
     }
 
@@ -63,7 +64,8 @@ class Record {
         horny: Double? = nil,
         mass: Double? = nil,
         avgMass: Double? = nil,
-        preciseDensity: Double? = nil
+        preciseDensity: Double? = nil,
+        avgDensity: Double? = nil
     ) {
         self.timestamp = timestamp
         self.exactTime = exactTime
@@ -80,6 +82,7 @@ class Record {
         self.mass = mass
         self.avgMass = avgMass
         self.preciseDensity = preciseDensity
+        self.avgDensity = avgDensity
     }
 }
 
@@ -90,22 +93,46 @@ func computeAverageMass(from records: [Record]) -> Double? {
     return totalMass / Double(validMasses.count)
 }
 
+func computeAverageDensity(from records: [Record]) -> Double? {
+    let validDensities = records.compactMap(\.preciseDensity).filter { $0 > 0 }
+    guard !validDensities.isEmpty else { return nil }
+    let totalDensity = validDensities.reduce(0, +)
+    return totalDensity / Double(validDensities.count)
+}
+
 @discardableResult
-func refreshAverageMass(in modelContext: ModelContext) -> Double? {
+func refreshStoredAverages(in modelContext: ModelContext) -> (avgMass: Double?, avgDensity: Double?) {
     let descriptor = FetchDescriptor<Record>(sortBy: [SortDescriptor(\Record.timestamp, order: .forward)])
-    guard let records = try? modelContext.fetch(descriptor) else { return nil }
+    guard let records = try? modelContext.fetch(descriptor) else {
+        return (nil, nil)
+    }
 
     let averageMass = computeAverageMass(from: records)
+    let averageDensity = computeAverageDensity(from: records)
     for record in records {
         record.avgMass = averageMass
+        record.avgDensity = averageDensity
     }
 
     try? modelContext.save()
-    return averageMass
+    return (averageMass, averageDensity)
+}
+
+@discardableResult
+func refreshAverageMass(in modelContext: ModelContext) -> Double? {
+    refreshStoredAverages(in: modelContext).avgMass
 }
 
 func storedAverageMass(from records: [Record]) -> Double? {
     computeAverageMass(from: records) ?? records.compactMap(\.avgMass).last
+}
+
+func storedAverageDensity(from records: [Record]) -> Double? {
+    computeAverageDensity(from: records) ?? records.compactMap(\.avgDensity).last
+}
+
+func effectiveGlobalDensity(from records: [Record]) -> Double {
+    storedAverageDensity(from: records) ?? defaultDensity
 }
 
 func parsedRecordNumber(from text: String) -> Double? {

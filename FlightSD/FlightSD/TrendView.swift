@@ -149,6 +149,7 @@ private struct WeekTrendSummary {
     let validMassValues: [Double]
     let invalidMassRecordCount: Int
     let averageMass: Double?
+    let averageDensity: Double?
 
     init(records: [Record], calendar: Calendar = .current, referenceDate: Date = .now) {
         let today = calendar.startOfDay(for: referenceDate)
@@ -168,6 +169,7 @@ private struct WeekTrendSummary {
 
         invalidMassRecordCount = weekRecords.count - validMassValues.count
         averageMass = invalidMassRecordCount > 0 ? storedAverageMass(from: records) : nil
+        averageDensity = storedAverageDensity(from: records)
     }
 
     var totalValidMass: Double {
@@ -179,7 +181,7 @@ private struct WeekTrendSummary {
     }
 
     var totalEstimatedVolume: Double {
-        totalMass / defaultDensity
+        totalMass / (averageDensity ?? defaultDensity)
     }
 }
 
