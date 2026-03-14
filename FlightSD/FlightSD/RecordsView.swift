@@ -1586,11 +1586,11 @@ private struct RecordDraft {
         postnut = record.postnut
         horny = record.horny
         massText = record.mass.map {
-            RecordPresentation.numberText($0, maxFractionDigits: 2)
+            editableRecordNumberText($0, maxFractionDigits: 2)
         } ?? ""
         usePreciseDensity = record.preciseDensity != nil
         preciseDensityText = record.preciseDensity.map {
-            RecordPresentation.numberText($0, maxFractionDigits: 3)
+            editableRecordNumberText($0, maxFractionDigits: 3)
         } ?? ""
     }
 
@@ -1645,14 +1645,11 @@ private struct RecordDraft {
     }
 
     private func parsedOptionalNumber(from text: String) -> Double? {
-        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return nil }
-        return Double(trimmed)
+        parsedRecordNumber(from: text)
     }
 
     private func hasValidNumber(_ text: String) -> Bool {
-        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        return trimmed.isEmpty || Double(trimmed) != nil
+        isValidRecordNumber(text)
     }
 }
 

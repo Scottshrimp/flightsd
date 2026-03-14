@@ -582,9 +582,7 @@ struct NewRecordView: View {
     }
 
     private func parsedOptionalNumber(from text: String) -> Double? {
-        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return nil }
-        return Double(trimmed)
+        parsedRecordNumber(from: text)
     }
 
     private func fieldScrollID(_ index: Int) -> String {

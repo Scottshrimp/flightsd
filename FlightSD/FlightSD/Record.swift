@@ -108,6 +108,32 @@ func storedAverageMass(from records: [Record]) -> Double? {
     computeAverageMass(from: records) ?? records.compactMap(\.avgMass).last
 }
 
+func parsedRecordNumber(from text: String) -> Double? {
+    let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !trimmed.isEmpty else { return nil }
+
+    for formatter in [currentLocaleRecordNumberFormatter, posixRecordNumberFormatter] {
+        if let number = formatter.number(from: trimmed) {
+            return number.doubleValue
+        }
+    }
+
+    let fallback = trimmed
+        .replacingOccurrences(of: ",", with: "")
+        .replacingOccurrences(of: " ", with: "")
+    return Double(fallback)
+}
+
+func isValidRecordNumber(_ text: String) -> Bool {
+    let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+    return trimmed.isEmpty || parsedRecordNumber(from: trimmed) != nil
+}
+
+func editableRecordNumberText(_ value: Double, maxFractionDigits: Int) -> String {
+    plainRecordNumberFormatter.maximumFractionDigits = maxFractionDigits
+    return plainRecordNumberFormatter.string(from: NSNumber(value: value)) ?? String(value)
+}
+
 func normalizedRecordDate(_ date: Date, calendar: Calendar = .current) -> Date {
     calendar.startOfDay(for: date)
 }
@@ -122,6 +148,32 @@ func recordHasClockTime(_ date: Date, calendar: Calendar = .current) -> Bool {
     let components = calendar.dateComponents([.hour, .minute, .second], from: date)
     return (components.hour ?? 0) != 0 || (components.minute ?? 0) != 0 || (components.second ?? 0) != 0
 }
+
+private let currentLocaleRecordNumberFormatter: NumberFormatter = {
+    let formatter = NumberFormatter()
+    formatter.numberStyle = .decimal
+    formatter.locale = .current
+    formatter.isLenient = true
+    return formatter
+}()
+
+private let posixRecordNumberFormatter: NumberFormatter = {
+    let formatter = NumberFormatter()
+    formatter.numberStyle = .decimal
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.isLenient = true
+    return formatter
+}()
+
+private let plainRecordNumberFormatter: NumberFormatter = {
+    let formatter = NumberFormatter()
+    formatter.numberStyle = .decimal
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.usesGroupingSeparator = false
+    formatter.minimumFractionDigits = 0
+    formatter.maximumFractionDigits = 3
+    return formatter
+}()
 //
 //  Record.swift
 //  FlightSD
