@@ -611,10 +611,8 @@ private extension AnyTransition {
 
 private struct RecordSummaryRow: View {
     let record: Record
-
-    private var exactTime: Date? {
-        RecordPresentation.exactTime(for: record)
-    }
+    private let metricSectionWidth: CGFloat = 118
+    private let mediaCategoryWidth: CGFloat = 58
 
     private var leadingDots: [MetricDot] {
         RecordPresentation.leadingMetricDots(for: record)
@@ -622,11 +620,7 @@ private struct RecordSummaryRow: View {
 
     var body: some View {
         HStack(alignment: .center, spacing: 12) {
-            TimestampLine(record: record, inlineMetrics: exactTime == nil ? leadingDots : [])
-
-            if exactTime != nil {
-                MetricDotStrip(metrics: leadingDots)
-            }
+            TimestampLine(record: record, leadingMetrics: leadingDots)
 
             Spacer(minLength: 8)
 
@@ -638,14 +632,17 @@ private struct RecordSummaryRow: View {
                         .font(.caption.weight(.medium))
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
-                        .fixedSize(horizontal: true, vertical: false)
+                        .minimumScaleFactor(0.9)
                 }
+                .frame(width: metricSectionWidth, alignment: .trailing)
+                .offset(x: 5)
 
                 Text(RecordPresentation.mediaCategory(for: record))
                     .font(.footnote.weight(.semibold))
                     .foregroundStyle(.primary)
                     .lineLimit(1)
-                    .fixedSize(horizontal: true, vertical: false)
+                    .minimumScaleFactor(0.9)
+                    .frame(width: mediaCategoryWidth, alignment: .trailing)
             }
             .layoutPriority(1)
         }
@@ -657,32 +654,62 @@ private struct RecordSummaryRow: View {
 
 private struct TimestampLine: View {
     let record: Record
-    var inlineMetrics: [MetricDot] = []
+    var leadingMetrics: [MetricDot] = []
+    private let dateWidth: CGFloat = 46
+    private let timeWidth: CGFloat = 40
+    private let dotStripWidth: CGFloat = 17
 
     private var usesSwappedDateTimeStyle: Bool {
         !Calendar.current.isDateInToday(RecordPresentation.recordDate(for: record))
     }
 
+    private var dateToTimeSpacing: CGFloat {
+        usesSwappedDateTimeStyle ? 8 : 6
+    }
+
+    private let trailingMetricSpacing: CGFloat = 5
+
     var body: some View {
-        HStack(spacing: 6) {
-            if let dateText = RecordPresentation.summaryDateText(for: record) {
-                Text(dateText)
-                    .font(usesSwappedDateTimeStyle ? .footnote.weight(.semibold) : .caption.weight(.medium))
-                    .foregroundStyle(usesSwappedDateTimeStyle ? .primary : .secondary)
-            }
+        let dateText = RecordPresentation.summaryDateText(for: record)
+        let timeText = RecordPresentation.summaryTimeText(for: record)
+        let showsDate = dateText != nil
 
-            if let timeText = RecordPresentation.summaryTimeText(for: record) {
-                Text(timeText)
-                    .font(usesSwappedDateTimeStyle ? .caption.weight(.medium) : .footnote.weight(.semibold))
-                    .foregroundStyle(usesSwappedDateTimeStyle ? .secondary : .primary)
-            }
+        HStack(spacing: trailingMetricSpacing) {
+            HStack(spacing: dateToTimeSpacing) {
+                if let dateText {
+                    textSlot(
+                        dateText,
+                        width: dateWidth,
+                        font: usesSwappedDateTimeStyle ? .footnote.weight(.semibold) : .caption.weight(.medium),
+                        color: usesSwappedDateTimeStyle ? .primary : .secondary
+                    )
+                }
 
-            if !inlineMetrics.isEmpty {
-                MetricDotStrip(metrics: inlineMetrics)
+                if let timeText {
+                    textSlot(
+                        timeText,
+                        width: timeWidth,
+                        font: usesSwappedDateTimeStyle ? .caption.weight(.medium) : .footnote.weight(.semibold),
+                        color: usesSwappedDateTimeStyle ? .secondary : .primary
+                    )
+                }
             }
+            
+            MetricDotStrip(metrics: leadingMetrics)
+                .frame(width: dotStripWidth, alignment: .leading)
+                .opacity(leadingMetrics.isEmpty ? 0 : 1)
+                .offset(x: showsDate ? 0 : 0)
         }
         .lineLimit(1)
         .layoutPriority(0)
+    }
+
+    @ViewBuilder
+    private func textSlot(_ text: String, width: CGFloat, font: Font, color: Color) -> some View {
+        Text(text)
+            .font(font)
+            .foregroundStyle(color)
+            .frame(width: width, alignment: .leading)
     }
 }
 
@@ -1681,7 +1708,7 @@ private enum RecordPresentation {
     private static let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.dateFormat = "LLL. dd"
+        formatter.dateFormat = "LLL. d"
         return formatter
     }()
 
@@ -1734,7 +1761,7 @@ private enum RecordPresentation {
         case let (nil, .some(mediaType)):
             return mediaTypeLabel(mediaType)
         case (nil, nil):
-            return "Uncategorized"
+            return "No Cat."
         }
     }
 
@@ -1752,11 +1779,15 @@ private enum RecordPresentation {
 
     static func summaryDateText(for record: Record) -> String? {
         let date = recordDate(for: record)
+        let calendar = Calendar.current
+
         guard exactTime(for: record) != nil else {
+            guard !calendar.isDateInToday(date) else {
+                return nil
+            }
             return dateFormatter.string(from: date)
         }
 
-        let calendar = Calendar.current
         guard !calendar.isDateInToday(date) else {
             return nil
         }
@@ -1764,7 +1795,10 @@ private enum RecordPresentation {
     }
 
     static func summaryTimeText(for record: Record) -> String? {
-        guard let exactTime = exactTime(for: record) else { return nil }
+        guard let exactTime = exactTime(for: record) else {
+            let date = recordDate(for: record)
+            return Calendar.current.isDateInToday(date) ? "--:--" : nil
+        }
         return timeFormatter.string(from: exactTime)
     }
 
