@@ -71,7 +71,8 @@ struct ContentView: View {
                     AddRecordBar {
                         appState.showNewRecord = true
                     }
-                    .padding(.bottom, max(tabBarHeight - proxy.safeAreaInsets.bottom, 49))
+                    .padding(.horizontal, AddRecordBar.floatingHorizontalPadding)
+                    .padding(.bottom, max(tabBarHeight - proxy.safeAreaInsets.bottom, 49) + AddRecordBar.floatingBottomSpacing)
                     .transaction { transaction in
                         transaction.animation = nil
                     }
@@ -104,6 +105,8 @@ private struct AddRecordBarReservedSpace: View {
             .hidden()
             .allowsHitTesting(false)
             .accessibilityHidden(true)
+            .padding(.horizontal, AddRecordBar.floatingHorizontalPadding)
+            .padding(.top, AddRecordBar.floatingBottomSpacing)
     }
 }
 

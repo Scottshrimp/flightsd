@@ -1146,6 +1146,10 @@ struct AddRecordBar: View {
 
     let action: () -> Void
 
+    static let floatingHorizontalPadding: CGFloat = 16
+    static let floatingBottomSpacing: CGFloat = 12
+    static let cornerRadius: CGFloat = 18
+
     private var gradientColors: [Color] {
         let darkerBlue = Color(red: 0, green: 111.0 / 255.0, blue: 248.0 / 255.0)
         let lighterBlue = Color(red: 32.0 / 255.0, green: 138.0 / 255.0, blue: 1)
@@ -1192,11 +1196,11 @@ struct AddRecordBar: View {
         .buttonStyle(.plain)
         .background {
             ZStack {
-                Rectangle()
+                RoundedRectangle(cornerRadius: Self.cornerRadius, style: .continuous)
                     .fill(.ultraThinMaterial)
 
                 GeometryReader { proxy in
-                    Rectangle()
+                    RoundedRectangle(cornerRadius: Self.cornerRadius, style: .continuous)
                         .fill(diagonalGradient(in: proxy.size))
                         .saturation(1.3)
                         .brightness(-0.05)
@@ -1204,12 +1208,19 @@ struct AddRecordBar: View {
                 }
             }
         }
-        .overlay(alignment: .top) {
-            Rectangle()
-                .fill(Color.white.opacity(0.18))
-                .frame(height: 1)
+        .overlay {
+            RoundedRectangle(cornerRadius: Self.cornerRadius, style: .continuous)
+                .strokeBorder(Color.white.opacity(0.16), lineWidth: 1)
+                .mask {
+                    LinearGradient(
+                        colors: [Color.white, Color.white.opacity(0)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                }
         }
-        .ignoresSafeArea(edges: .horizontal)
+        .clipShape(RoundedRectangle(cornerRadius: Self.cornerRadius, style: .continuous))
+        .contentShape(RoundedRectangle(cornerRadius: Self.cornerRadius, style: .continuous))
     }
 }
 
