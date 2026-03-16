@@ -1681,7 +1681,7 @@ private enum RecordPresentation {
     private static let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.dateFormat = "LLL. ddd"
+        formatter.dateFormat = "LLL. dd"
         return formatter
     }()
 
