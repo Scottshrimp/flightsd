@@ -62,6 +62,7 @@ private enum TrendTab: String, CaseIterable, Identifiable {
 private struct WeekTrendPage: View {
     let records: [Record]
 
+    @AppStorage("trendTargetFlightsPerWeek") private var storedTargFlPerW: Double = 7
     @State private var metric: WeekTrendMetric = .estVolume
 
     private let horizontalPadding: CGFloat = 18
@@ -69,6 +70,16 @@ private struct WeekTrendPage: View {
 
     private var weekSummary: WeekTrendSummary {
         WeekTrendSummary(records: records)
+    }
+
+    private var targFlPerW: Double {
+        get { min(max(storedTargFlPerW, 0), 70) }
+        nonmutating set { storedTargFlPerW = min(max(newValue, 0), 70) }
+    }
+
+    private var targFlPerD: Double {
+        get { targFlPerW / 7 }
+        nonmutating set { targFlPerW = newValue * 7 }
     }
 
     var body: some View {
@@ -100,7 +111,12 @@ private struct WeekTrendPage: View {
                                 .fixedSize(horizontal: true, vertical: true)
 
                             Circle()
-                                .fill(weekTrendMassColor(for: weekSummary.totalMass))
+                                .fill(
+                                    weekTrendFrequencyColor(
+                                        flPerWRecentW: weekSummary.flPerWRecentW,
+                                        targFlPerW: targFlPerW
+                                    )
+                                )
                                 .frame(width: 12, height: 12)
                         }
 
@@ -178,6 +194,14 @@ private struct WeekTrendSummary {
     var totalEstimatedVolume: Double {
         estimatedVolume(for: totalMass, averageDensity: averageDensity)
     }
+
+    var flPerWRecentW: Double {
+        Double(weekRecords.count)
+    }
+
+    var flPerDRecentW: Double {
+        flPerWRecentW / 7
+    }
 }
 
 private enum WeekTrendMetric {
@@ -203,15 +227,15 @@ private enum WeekTrendMetric {
     }
 }
 
-private func weekTrendMassColor(for totalMass: Double) -> Color {
-    switch totalMass {
-    case ...8:
+private func weekTrendFrequencyColor(flPerWRecentW: Double, targFlPerW: Double) -> Color {
+    switch flPerWRecentW {
+    case ..<max(targFlPerW - 2, 0):
         return .teal
-    case 8...20:
+    case ..<max(targFlPerW - 1, 0):
         return .blue
-    case 20...34:
+    case ..<targFlPerW:
         return .green
-    case 34...44:
+    case ..<(targFlPerW + 1):
         return .orange
     default:
         return .pink
