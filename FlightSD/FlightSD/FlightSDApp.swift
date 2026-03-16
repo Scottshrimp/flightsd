@@ -6,6 +6,7 @@ struct FlightSDApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Record.self,
+            DateTrend.self,
         ])
         let modelConfiguration = ModelConfiguration(
             schema: schema,
@@ -20,7 +21,7 @@ struct FlightSDApp: App {
     }()
 
     init() {
-        _ = refreshStoredAverages(in: sharedModelContainer.mainContext)
+        refreshDerivedData(in: sharedModelContainer.mainContext)
     }
 
     var body: some Scene {

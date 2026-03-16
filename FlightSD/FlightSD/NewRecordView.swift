@@ -570,7 +570,7 @@ struct NewRecordView: View {
 
         modelContext.insert(record)
         try? modelContext.save()
-        refreshStoredAverages(in: modelContext)
+        refreshDerivedData(in: modelContext)
     }
 
     private func scheduleReminder(minutes: Int) {

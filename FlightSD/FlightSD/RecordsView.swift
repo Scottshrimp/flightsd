@@ -562,7 +562,7 @@ private struct RecordEntryCard: View {
         record.preciseDensity = draft.preciseDensityValue
 
         try? modelContext.save()
-        refreshStoredAverages(in: modelContext)
+        refreshDerivedData(in: modelContext)
 
         if scrollsToNextRecord {
             onBottomDone()
@@ -575,7 +575,7 @@ private struct RecordEntryCard: View {
         onDeleteConfirmed {
             modelContext.delete(record)
             try? modelContext.save()
-            refreshStoredAverages(in: modelContext)
+            refreshDerivedData(in: modelContext)
         }
     }
 }

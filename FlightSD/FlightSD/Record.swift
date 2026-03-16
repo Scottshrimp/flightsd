@@ -16,6 +16,23 @@ enum MediaType: String, Codable {
 }
 
 @Model
+class DateTrend {
+    var date: String
+    var sumTimesW: Double
+    var avgTimesW: Double
+
+    init(
+        date: String,
+        sumTimesW: Double = 0,
+        avgTimesW: Double = 0
+    ) {
+        self.date = date
+        self.sumTimesW = sumTimesW
+        self.avgTimesW = avgTimesW
+    }
+}
+
+@Model
 class Record {
     var timestamp: Date
     var exactTime: Date?
@@ -117,6 +134,80 @@ func refreshStoredAverages(in modelContext: ModelContext) -> (avgMass: Double?, 
     return (averageMass, averageDensity)
 }
 
+@discardableResult
+func refreshDateTrends(in modelContext: ModelContext, calendar: Calendar = .current, referenceDate: Date = .now) -> [DateTrend] {
+    let recordDescriptor = FetchDescriptor<Record>(sortBy: [SortDescriptor(\Record.timestamp, order: .forward)])
+    let trendDescriptor = FetchDescriptor<DateTrend>(sortBy: [SortDescriptor(\DateTrend.date, order: .forward)])
+
+    guard
+        let records = try? modelContext.fetch(recordDescriptor),
+        let existingTrends = try? modelContext.fetch(trendDescriptor)
+    else {
+        return []
+    }
+
+    let today = normalizedRecordDate(referenceDate, calendar: calendar)
+    let earliestRecordDate = records.map { normalizedRecordDate($0.timestamp, calendar: calendar) }.min()
+    let earliestExistingTrendDate = existingTrends.compactMap { dateTrendDate(from: $0.date, calendar: calendar) }.min()
+    let startDate = [earliestRecordDate, earliestExistingTrendDate, today].compactMap { $0 }.min() ?? today
+
+    var existingTrendByDate: [String: DateTrend] = [:]
+    for trend in existingTrends {
+        if let preserved = existingTrendByDate[trend.date], preserved !== trend {
+            modelContext.delete(trend)
+            continue
+        }
+        existingTrendByDate[trend.date] = trend
+    }
+
+    let dailyCounts = Dictionary(
+        grouping: records,
+        by: { dateTrendKey(from: normalizedRecordDate($0.timestamp, calendar: calendar), calendar: calendar) }
+    ).mapValues(\.count)
+
+    var trends: [DateTrend] = []
+    var rollingCounts: [Int] = []
+    var rollingSum = 0
+    var currentDate = startDate
+
+    while currentDate <= today {
+        let key = dateTrendKey(from: currentDate, calendar: calendar)
+        let dayCount = dailyCounts[key, default: 0]
+        rollingCounts.append(dayCount)
+        rollingSum += dayCount
+
+        if rollingCounts.count > 7 {
+            rollingSum -= rollingCounts.removeFirst()
+        }
+
+        let sumTimesW = Double(rollingSum)
+        let avgTimesW = sumTimesW / 7
+        let trend = existingTrendByDate[key] ?? DateTrend(date: key)
+        trend.sumTimesW = sumTimesW
+        trend.avgTimesW = avgTimesW
+
+        if existingTrendByDate[key] == nil {
+            modelContext.insert(trend)
+            existingTrendByDate[key] = trend
+        }
+
+        trends.append(trend)
+
+        guard let nextDate = calendar.date(byAdding: .day, value: 1, to: currentDate), nextDate > currentDate else {
+            break
+        }
+        currentDate = nextDate
+    }
+
+    try? modelContext.save()
+    return trends
+}
+
+func refreshDerivedData(in modelContext: ModelContext) {
+    _ = refreshStoredAverages(in: modelContext)
+    _ = refreshDateTrends(in: modelContext)
+}
+
 func storedAverageMass(from records: [Record]) -> Double? {
     computeAverageMass(from: records) ?? records.compactMap(\.avgMass).last
 }
@@ -210,6 +301,24 @@ private let plainRecordNumberFormatter: NumberFormatter = {
     formatter.maximumFractionDigits = 3
     return formatter
 }()
+
+private let dateTrendFormatter: DateFormatter = {
+    let formatter = DateFormatter()
+    formatter.calendar = .current
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.timeZone = .current
+    formatter.dateFormat = "yyyy-MM-dd"
+    return formatter
+}()
+
+func dateTrendKey(from date: Date, calendar: Calendar = .current) -> String {
+    dateTrendFormatter.string(from: normalizedRecordDate(date, calendar: calendar))
+}
+
+func dateTrendDate(from key: String, calendar: Calendar = .current) -> Date? {
+    guard let date = dateTrendFormatter.date(from: key) else { return nil }
+    return normalizedRecordDate(date, calendar: calendar)
+}
 //
 //  Record.swift
 //  FlightSD
