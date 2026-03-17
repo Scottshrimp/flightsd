@@ -100,21 +100,28 @@ private struct WeekTrendPage: View {
     private var displayedYAxisMarks: [Double] {
         chartSummary.displayedYAxisMarks(
             scaleMultiplier: displayedChartScale,
-            suppressFractionalMarks: displayedSuppressFractionalAxisMarks
+            suppressFractionalMarks: displayedSuppressFractionalAxisMarks,
+            referenceValues: [displayedTargetValue]
         )
     }
 
     private var displayedYAxisFractionDigits: Int {
         chartSummary.displayedYAxisFractionDigits(
             scaleMultiplier: displayedChartScale,
-            suppressFractionalMarks: displayedSuppressFractionalAxisMarks
+            suppressFractionalMarks: displayedSuppressFractionalAxisMarks,
+            referenceValues: [displayedTargetValue]
         )
     }
 
     private var displayedYDomain: ClosedRange<Double> {
         chartSummary.displayedYDomain(
-            scaleMultiplier: displayedChartScale
+            scaleMultiplier: displayedChartScale,
+            referenceValues: [displayedTargetValue]
         )
+    }
+
+    private var displayedTargetValue: Double {
+        targFlPerD * displayedChartScale
     }
 
     var body: some View {
@@ -201,6 +208,10 @@ private struct WeekTrendPage: View {
             .pickerStyle(.segmented)
 
             Chart(chartSummary.points) { point in
+                RuleMark(y: .value("Target", displayedTargetValue))
+                    .foregroundStyle(AddRecordBar.primaryBlue.opacity(0.9))
+                    .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [6, 4]))
+
                 LineMark(
                     x: .value("Time", point.date),
                     y: .value("Value", point.avgTimesW * displayedChartScale)
@@ -246,6 +257,41 @@ private struct WeekTrendPage: View {
             .chartOverlay { proxy in
                 GeometryReader { geometry in
                     if let plotFrame = proxy.plotFrame.map({ geometry[$0] }) {
+                        Rectangle()
+                            .fill(.clear)
+                            .frame(width: plotFrame.width, height: plotFrame.height)
+                            .contentShape(Rectangle())
+                            .position(x: plotFrame.midX, y: plotFrame.midY)
+                            .gesture(
+                                DragGesture(minimumDistance: 0)
+                                    .onChanged { value in
+                                        updateTargetValue(
+                                            from: value.location,
+                                            plotFrame: plotFrame
+                                        )
+                                    }
+                            )
+
+                        if let plotTargetY = proxy.position(forY: displayedTargetValue) {
+                            let targetY = plotFrame.minY + plotTargetY
+
+                            Rectangle()
+                                .fill(AddRecordBar.primaryBlue.opacity(0.9))
+                                .frame(width: plotFrame.width, height: 1.5)
+                                .position(x: plotFrame.midX, y: targetY)
+
+                            Text("Targ")
+                                .font(.caption2.weight(.semibold))
+                                .foregroundStyle(AddRecordBar.primaryBlue)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 3)
+                                .background(.thinMaterial, in: Capsule())
+                                .position(
+                                    x: plotFrame.maxX - 20,
+                                    y: targetY - 12
+                                )
+                        }
+
                         ForEach(Array(displayedYAxisMarks.enumerated()), id: \.offset) { _, mark in
                             if let plotY = proxy.position(forY: mark) {
                                 Text(fixedDisplayNumberText(mark, fractionDigits: displayedYAxisFractionDigits))
@@ -303,6 +349,18 @@ private struct WeekTrendPage: View {
         .onDisappear {
             axisMarkTransitionTask?.cancel()
         }
+    }
+
+    private func updateTargetValue(from location: CGPoint, plotFrame: CGRect) {
+        guard plotFrame.height > 0 else { return }
+
+        let clampedY = min(max(location.y, plotFrame.minY), plotFrame.maxY)
+        let relativeY = clampedY - plotFrame.minY
+        let progress = 1 - (relativeY / plotFrame.height)
+        let domain = displayedYDomain
+        let displayedValue = domain.lowerBound + Double(progress) * (domain.upperBound - domain.lowerBound)
+        let scale = max(displayedChartScale, 0.000_001)
+        targFlPerD = max(0, displayedValue / scale)
     }
 }
 
@@ -462,8 +520,8 @@ private struct RecentWeekChartSummary {
         return firstDate...lastDate
     }
 
-    func displayedYDomain(scaleMultiplier: Double) -> ClosedRange<Double> {
-        let displayedValues = points.map { $0.avgTimesW * scaleMultiplier }
+    func displayedYDomain(scaleMultiplier: Double, referenceValues: [Double] = []) -> ClosedRange<Double> {
+        let displayedValues = points.map { $0.avgTimesW * scaleMultiplier } + referenceValues
         guard let minValue = displayedValues.min(), let maxValue = displayedValues.max() else {
             return 0...1
         }
@@ -493,8 +551,11 @@ private struct RecentWeekChartSummary {
         return normalizedAxisValue(snappedLowerBound)...normalizedAxisValue(snappedUpperBound)
     }
 
-    func displayedYAxisMarks(scaleMultiplier: Double, suppressFractionalMarks: Bool) -> [Double] {
-        let domain = displayedYDomain(scaleMultiplier: scaleMultiplier)
+    func displayedYAxisMarks(scaleMultiplier: Double, suppressFractionalMarks: Bool, referenceValues: [Double] = []) -> [Double] {
+        let domain = displayedYDomain(
+            scaleMultiplier: scaleMultiplier,
+            referenceValues: referenceValues
+        )
         let step = niceAxisStep(for: domain.upperBound - domain.lowerBound)
         guard step > 0 else { return [domain.lowerBound, domain.upperBound] }
 
@@ -512,12 +573,15 @@ private struct RecentWeekChartSummary {
         return integerMarks.isEmpty ? normalizedMarks : integerMarks
     }
 
-    func displayedYAxisFractionDigits(scaleMultiplier: Double, suppressFractionalMarks: Bool) -> Int {
+    func displayedYAxisFractionDigits(scaleMultiplier: Double, suppressFractionalMarks: Bool, referenceValues: [Double] = []) -> Int {
         if suppressFractionalMarks {
             return 0
         }
 
-        let domain = displayedYDomain(scaleMultiplier: scaleMultiplier)
+        let domain = displayedYDomain(
+            scaleMultiplier: scaleMultiplier,
+            referenceValues: referenceValues
+        )
         let step = niceAxisStep(for: domain.upperBound - domain.lowerBound)
         switch step {
         case let value where value >= 1:

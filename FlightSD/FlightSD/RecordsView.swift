@@ -1149,16 +1149,15 @@ struct AddRecordBar: View {
     static let floatingHorizontalPadding: CGFloat = 16
     static let floatingBottomSpacing: CGFloat = 12
     static let cornerRadius: CGFloat = 18
+    static let primaryBlue = Color(red: 0, green: 111.0 / 255.0, blue: 248.0 / 255.0)
+    static let secondaryBlue = Color(red: 32.0 / 255.0, green: 138.0 / 255.0, blue: 1)
 
     private var gradientColors: [Color] {
-        let darkerBlue = Color(red: 0, green: 111.0 / 255.0, blue: 248.0 / 255.0)
-        let lighterBlue = Color(red: 32.0 / 255.0, green: 138.0 / 255.0, blue: 1)
-
         if colorScheme == .dark {
-            return [lighterBlue, darkerBlue]
+            return [Self.secondaryBlue, Self.primaryBlue]
         }
 
-        return [darkerBlue, lighterBlue]
+        return [Self.primaryBlue, Self.secondaryBlue]
     }
 
     private func diagonalGradient(in size: CGSize) -> LinearGradient {
