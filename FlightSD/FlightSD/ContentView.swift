@@ -10,7 +10,7 @@ struct ContentView: View {
     @State private var selectedTab: Int = 0
     @State private var tabBarHeight: CGFloat = 0
 
-    // 创建 AppState 实例，注入给所有子
+    // 创建 AppState 实例，注入给所有
     @State private var appState = AppState()
 
     private var todayString: String {
