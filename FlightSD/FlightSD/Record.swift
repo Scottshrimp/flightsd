@@ -58,6 +58,7 @@ class Record {
     var preciseDensity: Double?
     var avgDensity: Double?
 
+    // Keep volume derived so edits to density inputs are reflected immediately.
     // ⑧ 计算属性：est.vol 不存储，实时根据 mass 和密度计算
     var estVol: Double? {
         guard let mass else { return nil }

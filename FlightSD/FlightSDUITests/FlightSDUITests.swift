@@ -24,6 +24,7 @@ final class FlightSDUITests: XCTestCase {
 
     @MainActor
     func testExample() throws {
+        // Smoke launch coverage is enough here until the main navigation settles.
         // UI tests must launch the application that they test.
         let app = XCUIApplication()
         app.launch()

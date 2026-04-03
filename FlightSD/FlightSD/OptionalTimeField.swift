@@ -47,6 +47,7 @@ struct TimeSelectionSheet: View {
     let onConfirm: (Date) -> Void
 
     @Environment(\.dismiss) private var dismiss
+    // Stage edits locally so tapping Cancel leaves the caller untouched.
     @State private var selectedTime: Date
 
     init(

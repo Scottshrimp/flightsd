@@ -9,5 +9,6 @@ import SwiftUI
 
 @Observable
 class AppState {
+    // Shared transient UI state for presenting the capture sheet from multiple tabs.
     var showNewRecord: Bool = false
 }

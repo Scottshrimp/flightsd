@@ -11,6 +11,7 @@ struct TrendView: View {
 
     var body: some View {
         VStack(spacing: 3) {
+            // Only the week flow is implemented now; month and year remain placeholders.
             trendTabSelector
                 .padding(.horizontal, horizontalPadding)
                 .padding(.top, 18)
@@ -77,6 +78,7 @@ private struct WeekTrendPage: View {
     private let horizontalPadding: CGFloat = 18
     private let cardCornerRadius: CGFloat = 14
 
+    // Build cards and charts from the same summaries to avoid mismatched totals.
     private var weekSummary: WeekTrendSummary {
         WeekTrendSummary(records: records)
     }

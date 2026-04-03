@@ -2,6 +2,7 @@ import SwiftUI
 
 struct StatsView: View {
     var body: some View {
+        // Placeholder until aggregated metrics move out of the trend experiments.
         Text("Stats")
     }
 }//
@@ -10,4 +11,3 @@ struct StatsView: View {
 //
 //  Created by Scott Nishiki on 2026-03-12.
 //
-

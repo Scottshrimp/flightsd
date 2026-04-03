@@ -29,6 +29,7 @@ struct RecordsView: View {
     private let filterButtonIconSize: CGFloat = 26
     private let filterButtonTrailingPadding: CGFloat = 14
 
+    // Filtering happens before grouping so every section reflects the same record set.
     private var filteredRecords: [Record] {
         records
             .filter { appliedFilter.matches($0) }

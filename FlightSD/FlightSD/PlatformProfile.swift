@@ -22,6 +22,7 @@ struct PlatformProfile: Equatable {
     let deviceClass: DeviceClass
     let osMajorVersion: Int
 
+    // Collapse raw device/version combinations into the smaller set of supported layouts.
     var targetSystemProfile: TargetSystemProfile {
         switch (deviceClass, osMajorVersion) {
         case (.phone, 18):
@@ -44,6 +45,7 @@ struct PlatformProfile: Equatable {
     var isTargetedSystem: Bool { targetSystemProfile != .other }
 
     static var current: PlatformProfile {
+        // Resolve this once from the host environment and inject it through SwiftUI.
         PlatformProfile(
             deviceClass: currentDeviceClass,
             osMajorVersion: ProcessInfo.processInfo.operatingSystemVersion.majorVersion

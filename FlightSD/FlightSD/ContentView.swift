@@ -19,6 +19,7 @@ struct ContentView: View {
         return formatter.string(from: Date.now)
     }
 
+    // Keep the floating action visible only where new entries are likely to be started.
     private var showsAddRecordBar: Bool {
         selectedTab == 0 || selectedTab == 1
     }
@@ -87,6 +88,7 @@ struct ContentView: View {
             NewRecordView()
         }
         .onAppear {
+            // On a fresh day, jump straight back into capture instead of the browsing tabs.
             if lastOpenedDate != todayString {
                 //lastOpenedDate != todayString {
                 lastOpenedDate = todayString

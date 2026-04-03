@@ -38,6 +38,7 @@ struct NewRecordView: View {
     private let hornyLabels = ["低", "中低", "中高", "高"]
     private let scrollAnchor = UnitPoint(x: 0.5, y: 0.5)
 
+    // Drive the action bar and progressive flow from one simple completeness check.
     private var filledStatus: [Bool] {
         [
             dimension != nil,

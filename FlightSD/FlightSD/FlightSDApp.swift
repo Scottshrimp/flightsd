@@ -3,6 +3,7 @@ import SwiftData
 
 @main
 struct FlightSDApp: App {
+    // A single container keeps record data and derived trend data in the same store.
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Record.self,
