@@ -71,6 +71,8 @@ private struct WeekTrendPage: View {
     @State private var displayedChartScale: Double = WeekTrendChartMetric.weekAvg.scaleMultiplier
     @State private var displayedSuppressFractionalAxisMarks = false
     @State private var axisMarkTransitionTask: Task<Void, Never>?
+    @State private var isTargetDragActive: Bool = false
+    @State private var dragTopOffset: CGFloat = 0
 
     private let horizontalPadding: CGFloat = 18
     private let cardCornerRadius: CGFloat = 14
@@ -94,7 +96,7 @@ private struct WeekTrendPage: View {
     }
 
     private var chartCardHeight: CGFloat {
-        286 * 0.75
+        isTargetDragActive ? 286 * 1.6 : 286 * 0.75
     }
 
     private var displayedYAxisMarks: [Double] {
@@ -208,10 +210,6 @@ private struct WeekTrendPage: View {
             .pickerStyle(.segmented)
 
             Chart(chartSummary.points) { point in
-                RuleMark(y: .value("Target", displayedTargetValue))
-                    .foregroundStyle(AddRecordBar.primaryBlue.opacity(0.9))
-                    .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [6, 4]))
-
                 LineMark(
                     x: .value("Time", point.date),
                     y: .value("Value", point.avgTimesW * displayedChartScale)
@@ -257,21 +255,6 @@ private struct WeekTrendPage: View {
             .chartOverlay { proxy in
                 GeometryReader { geometry in
                     if let plotFrame = proxy.plotFrame.map({ geometry[$0] }) {
-                        Rectangle()
-                            .fill(.clear)
-                            .frame(width: plotFrame.width, height: plotFrame.height)
-                            .contentShape(Rectangle())
-                            .position(x: plotFrame.midX, y: plotFrame.midY)
-                            .gesture(
-                                DragGesture(minimumDistance: 0)
-                                    .onChanged { value in
-                                        updateTargetValue(
-                                            from: value.location,
-                                            plotFrame: plotFrame
-                                        )
-                                    }
-                            )
-
                         if let plotTargetY = proxy.position(forY: displayedTargetValue) {
                             let targetY = plotFrame.minY + plotTargetY
 
@@ -279,6 +262,50 @@ private struct WeekTrendPage: View {
                                 .fill(AddRecordBar.primaryBlue.opacity(0.9))
                                 .frame(width: plotFrame.width, height: 1.5)
                                 .position(x: plotFrame.midX, y: targetY)
+                                .allowsHitTesting(false)
+
+                            Rectangle()
+                                .fill(.clear)
+                                .frame(width: plotFrame.width, height: 44)
+                                .contentShape(Rectangle())
+                                .position(x: plotFrame.midX, y: targetY)
+                                .gesture(
+                                    LongPressGesture(minimumDuration: 0.3)
+                                        .sequenced(before: DragGesture(minimumDistance: 0))
+                                        .onChanged { value in
+                                            switch value {
+                                            case .first(true):
+                                                guard !isTargetDragActive else { return }
+                                                let extraH = CGFloat(286 * 1.6 - 286 * 0.75)
+                                                let unexpandedH = CGFloat(286 * 0.75)
+                                                let chartTopInCard: CGFloat = 66
+                                                let targYInCard = chartTopInCard + targetY
+                                                let anchorFrac = min(max(targYInCard / unexpandedH, 0), 1)
+                                                withAnimation(.spring(response: 0.4, dampingFraction: 0.82)) {
+                                                    dragTopOffset = -(anchorFrac * extraH)
+                                                    isTargetDragActive = true
+                                                }
+                                                triggerHaptic()
+                                            case .second(true, let drag):
+                                                guard let drag,
+                                                      let currentPlotTargY = proxy.position(forY: displayedTargetValue)
+                                                else { return }
+                                                let yInPlot = currentPlotTargY + (drag.location.y - 22)
+                                                updateTargetValue(
+                                                    from: CGPoint(x: drag.location.x, y: yInPlot),
+                                                    plotFrame: plotFrame
+                                                )
+                                            default:
+                                                break
+                                            }
+                                        }
+                                        .onEnded { _ in
+                                            withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
+                                                isTargetDragActive = false
+                                                dragTopOffset = 0
+                                            }
+                                        }
+                                )
 
                             Text("Targ")
                                 .font(.caption2.weight(.semibold))
@@ -290,6 +317,7 @@ private struct WeekTrendPage: View {
                                     x: plotFrame.maxX - 20,
                                     y: targetY - 12
                                 )
+                                .allowsHitTesting(false)
                         }
 
                         ForEach(Array(displayedYAxisMarks.enumerated()), id: \.offset) { _, mark in
@@ -304,11 +332,11 @@ private struct WeekTrendPage: View {
                                         x: plotFrame.minX - 24,
                                         y: plotFrame.minY + plotY
                                     )
+                                    .allowsHitTesting(false)
                             }
                         }
                     }
                 }
-                .allowsHitTesting(false)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .padding(.leading, 12)
@@ -317,6 +345,8 @@ private struct WeekTrendPage: View {
         .padding(.top, 18)
         .padding(.bottom, 16)
         .frame(maxWidth: .infinity, minHeight: chartCardHeight, maxHeight: chartCardHeight, alignment: .top)
+        .offset(y: dragTopOffset)
+        .animation(.spring(response: 0.4, dampingFraction: 0.82), value: isTargetDragActive)
         .background {
             RoundedRectangle(cornerRadius: cardCornerRadius, style: .continuous)
                 .fill(.thinMaterial)
@@ -351,11 +381,18 @@ private struct WeekTrendPage: View {
         }
     }
 
+    private func triggerHaptic() {
+        #if canImport(UIKit)
+        let generator = UIImpactFeedbackGenerator(style: .medium)
+        generator.impactOccurred()
+        #endif
+    }
+
     private func updateTargetValue(from location: CGPoint, plotFrame: CGRect) {
         guard plotFrame.height > 0 else { return }
 
-        let clampedY = min(max(location.y, plotFrame.minY), plotFrame.maxY)
-        let relativeY = clampedY - plotFrame.minY
+        let clampedY = min(max(location.y, 0), plotFrame.height)
+        let relativeY = clampedY
         let progress = 1 - (relativeY / plotFrame.height)
         let domain = displayedYDomain
         let displayedValue = domain.lowerBound + Double(progress) * (domain.upperBound - domain.lowerBound)
